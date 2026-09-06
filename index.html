@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background:#221e19">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
@@ -14,6 +14,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
     <title>TinyLog</title>
+    <script>
+      (function () {
+        try {
+          var t = (JSON.parse(localStorage.getItem("tinylog.prefs.v1") || "{}").theme) || "system";
+          var light = t === "light" || (t === "system" && matchMedia("(prefers-color-scheme: light)").matches);
+          var r = document.documentElement;
+          if (light) r.classList.add("daylight");
+          r.style.colorScheme = light ? "light" : "dark";
+          r.style.background = light ? "#faf7f2" : "#221e19";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

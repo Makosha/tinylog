@@ -1,16 +1,17 @@
+import { LABEL } from "@/domain/events";
 import type { BabyState } from "@/domain/state";
 import type { DayStats } from "@/domain/stats";
 import { durationLabel, formatTime } from "@/domain/time";
+import { ICON } from "./icons";
 
-const LOOK: Record<BabyState["name"], { emoji: string; label: string; cls: string }> = {
-  awake: { emoji: "☀️", label: "Awake", cls: "bg-wake/12 border-wake/30" },
-  asleep: { emoji: "😴", label: "Asleep", cls: "bg-sleep/15 border-sleep/30" },
-  napping: { emoji: "🛌", label: "Napping", cls: "bg-nap/15 border-nap/30" },
-};
+const LOOK = {
+  awake: { Icon: ICON.awake, cls: "text-wake border-wake/30 bg-wake/10" },
+  asleep: { Icon: ICON.sleep, cls: "text-sleep border-sleep/30 bg-sleep/10" },
+  napping: { Icon: ICON.nap, cls: "text-nap border-nap/30 bg-nap/10" },
+} as const;
 
 export function StateCard({ state, stats, now }: { state: BabyState; stats: DayStats; now: number }) {
-  const look = LOOK[state.name];
-  const elapsed = durationLabel(state.since, now);
+  const { Icon, cls } = LOOK[state.name];
   const lastFeed = stats.lastFeed;
   const sub =
     state.name === "awake"
@@ -20,15 +21,15 @@ export function StateCard({ state, stats, now }: { state: BabyState; stats: DayS
       : `since ${formatTime(state.since)}`;
 
   return (
-    <section className={`rounded-3xl border p-4 ${look.cls}`} aria-live="polite">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="font-display text-2xl font-bold text-foreground">
-          <span className="mr-2">{look.emoji}</span>
-          {look.label}
-        </p>
-        <p className="font-display text-2xl font-bold tabular-nums text-foreground">{elapsed}</p>
+    <section className={`flex items-center gap-4 rounded-3xl border p-4 ${cls}`} aria-live="polite">
+      <span className="icon-tile size-14 shrink-0">
+        <Icon className="size-8" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-display text-2xl font-bold leading-tight text-foreground">{LABEL[state.name]}</p>
+        <p className="truncate text-sm text-muted-foreground">{sub}</p>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
+      <p className="font-display text-3xl font-bold tabular-nums text-foreground">{durationLabel(state.since, now)}</p>
     </section>
   );
 }

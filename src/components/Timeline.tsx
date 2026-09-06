@@ -1,11 +1,8 @@
-import { META, isRest, type LogEvent } from "@/domain/events";
+import { eventLabel, isRest, type LogEvent } from "@/domain/events";
 import { durationLabel, formatTime } from "@/domain/time";
+import { ICON } from "./icons";
 
-const RING: Record<string, string> = {
-  feed: "bg-feed/15",
-  sleep: "bg-sleep/15",
-  nap: "bg-nap/15",
-};
+const TONE = { feed: "text-feed", sleep: "text-sleep", nap: "text-nap" } as const;
 
 export function Timeline({ events, now, onSelect }: { events: LogEvent[]; now: number; onSelect: (e: LogEvent) => void }) {
   if (!events.length) {
@@ -14,8 +11,14 @@ export function Timeline({ events, now, onSelect }: { events: LogEvent[]; now: n
   return (
     <ul className="space-y-2">
       {events.map((e) => {
-        const meta = e.kind === "feed" ? META[e.source] : META[e.kind];
+        const Icon = ICON[e.kind === "feed" ? e.source : e.kind];
         const open = isRest(e) && e.endAt === undefined;
+        const detail =
+          e.kind === "feed"
+            ? [e.side, e.ml ? `${e.ml}ml` : null].filter(Boolean).join(" · ")
+            : open
+              ? `still ${e.kind === "sleep" ? "asleep" : "napping"}`
+              : "";
         return (
           <li key={e.id}>
             <button
@@ -23,12 +26,13 @@ export function Timeline({ events, now, onSelect }: { events: LogEvent[]; now: n
               onClick={() => onSelect(e)}
               className={`card-soft flex w-full items-center gap-3 p-3 text-left active:scale-[0.99] ${open ? "border-primary/40" : ""}`}
             >
-              <span className={`flex size-11 shrink-0 items-center justify-center rounded-xl text-xl ${RING[e.kind]}`}>{meta.emoji}</span>
+              <span className={`icon-tile size-11 shrink-0 ${TONE[e.kind]}`}>
+                <Icon className="size-6" />
+              </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-foreground">
-                  {meta.label}
-                  {e.kind === "feed" && e.ml ? <span className="ml-2 text-sm font-normal text-muted-foreground">{e.ml}ml</span> : null}
-                  {open ? <span className="ml-2 text-sm font-normal text-primary">still {e.kind === "sleep" ? "asleep" : "napping"}</span> : null}
+                <p className="truncate font-bold text-foreground">
+                  {eventLabel(e)}
+                  {detail ? <span className={`ml-2 text-sm font-normal ${open ? "text-primary" : "text-muted-foreground"}`}>{detail}</span> : null}
                 </p>
                 <p className="text-sm tabular-nums text-muted-foreground">
                   {formatTime(e.at)}

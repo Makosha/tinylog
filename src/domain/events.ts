@@ -1,4 +1,5 @@
 export type FeedSource = "breast" | "bottle";
+export type BreastSide = "left" | "right" | "both";
 
 export interface FeedEvent {
   id: string;
@@ -7,6 +8,8 @@ export interface FeedEvent {
   at: number;
   source: FeedSource;
   ml?: number;
+  /** breast only */
+  side?: BreastSide;
 }
 
 export type RestKind = "sleep" | "nap";
@@ -29,14 +32,19 @@ export const newId = () =>
 export const isRest = (e: LogEvent): e is RestEvent => e.kind === "sleep" || e.kind === "nap";
 export const isFeed = (e: LogEvent): e is FeedEvent => e.kind === "feed";
 
-export const META = {
-  feed: { label: "Feed", emoji: "🍼" },
-  breast: { label: "Breast", emoji: "🤱" },
-  bottle: { label: "Bottle", emoji: "🍼" },
-  sleep: { label: "Sleep", emoji: "😴" },
-  nap: { label: "Nap", emoji: "🛌" },
-  wake: { label: "Wake up", emoji: "⏰" },
+export const LABEL = {
+  breast: "Breast",
+  bottle: "Bottle",
+  sleep: "Sleep",
+  nap: "Nap",
+  wake: "Wake up",
+  awake: "Awake",
+  asleep: "Asleep",
+  napping: "Napping",
 } as const;
+
+/** Label for an event row: "Bottle", "Breast", "Sleep", "Nap". */
+export const eventLabel = (e: LogEvent) => LABEL[e.kind === "feed" ? e.source : e.kind];
 
 /** Newest first. */
 export const sortEvents = (events: LogEvent[]) => [...events].sort((a, b) => b.at - a.at);

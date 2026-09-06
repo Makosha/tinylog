@@ -6,8 +6,10 @@ const KEY = "tinylog.events.v2";
 const V1_KEY = "tinylog.events.v1";
 const PREFS_KEY = "tinylog.prefs.v1";
 
+export type Theme = "system" | "light" | "dark";
+
 interface Prefs {
-  daylight: boolean;
+  theme: Theme;
   lastMl: Partial<Record<FeedSource, number>>;
 }
 
@@ -17,7 +19,7 @@ interface Snapshot {
   storageOk: boolean;
 }
 
-let snap: Snapshot = { events: [], prefs: { daylight: false, lastMl: {} }, storageOk: true };
+let snap: Snapshot = { events: [], prefs: { theme: "system", lastMl: {} }, storageOk: true };
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -85,7 +87,7 @@ export const actions = {
   feed(source: FeedSource, at = Date.now()) {
     const r = S.feed(snap.events, source, at);
     setEvents(r.events);
-    return r.event;
+    return r;
   },
   startRest(kind: RestKind, at = Date.now()) {
     const r = S.startRest(snap.events, kind, at);

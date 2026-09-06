@@ -1,22 +1,28 @@
-import { META, type FeedSource, type RestKind } from "@/domain/events";
+import { LABEL, type FeedSource, type RestKind } from "@/domain/events";
 import type { BabyState } from "@/domain/state";
+import { ICON } from "./icons";
 
 export type Action = { type: "feed"; source: FeedSource } | { type: "rest"; kind: RestKind } | { type: "wake" };
 
-const BIG = "flex flex-col items-center justify-center gap-1 rounded-3xl border text-base font-semibold transition-transform active:scale-95";
-const STYLE = {
-  nap: "bg-nap/12 text-nap border-nap/30",
-  sleep: "bg-sleep/12 text-sleep border-sleep/30",
-  breast: "bg-feed/12 text-feed border-feed/30",
-  bottle: "bg-feed/12 text-feed border-feed/30",
-};
+const TONE = {
+  nap: "text-nap border-nap/30 bg-nap/10",
+  sleep: "text-sleep border-sleep/30 bg-sleep/10",
+  breast: "text-feed border-feed/30 bg-feed/10",
+  bottle: "text-feed border-feed/30 bg-feed/10",
+} as const;
 
-function Big({ k, onClick, tall }: { k: keyof typeof STYLE; onClick: () => void; tall?: boolean }) {
-  const m = META[k];
+function Big({ k, onClick, tall }: { k: keyof typeof TONE; onClick: () => void; tall?: boolean }) {
+  const Icon = ICON[k];
   return (
-    <button type="button" onClick={onClick} className={`${BIG} ${tall ? "h-24" : "h-20"} ${STYLE[k]}`}>
-      <span className="text-3xl">{m.emoji}</span>
-      {m.label}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex ${tall ? "h-28" : "h-24"} flex-col items-center justify-center gap-2 rounded-3xl border transition-transform active:scale-95 ${TONE[k]}`}
+    >
+      <span className="icon-tile size-13">
+        <Icon className="size-8" />
+      </span>
+      <span className="text-base font-bold">{LABEL[k]}</span>
     </button>
   );
 }
@@ -42,10 +48,12 @@ export function ActionButtons({ state, onAction }: { state: BabyState; onAction:
       <button
         type="button"
         onClick={() => onAction({ type: "wake" })}
-        className={`${BIG} surface-warm col-span-2 h-24 flex-row gap-3 border-transparent text-xl`}
+        className="surface-warm col-span-2 flex h-24 items-center justify-center gap-3 rounded-3xl transition-transform active:scale-95"
       >
-        <span className="text-3xl">{META.wake.emoji}</span>
-        {META.wake.label}
+        <span className="flex size-12 items-center justify-center rounded-2xl bg-white/20">
+          <ICON.wake className="size-7" />
+        </span>
+        <span className="font-display text-2xl font-bold">{LABEL.wake}</span>
       </button>
       {feeds}
     </section>

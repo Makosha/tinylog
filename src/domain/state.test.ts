@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveState, feed, startRest, wake, updateEvent, deleteEvent } from "./state";
+import { deriveState, feed, startRest, wake, reopenRest, updateEvent, deleteEvent } from "./state";
 import type { LogEvent } from "./events";
 
 const T0 = Date.parse("2026-09-07T20:00:00Z");
@@ -27,11 +27,28 @@ describe("deriveState", () => {
 });
 
 describe("transitions", () => {
-  it("feed inserts a feed without changing state", () => {
-    const { events, event } = feed([{ id: "a", kind: "sleep", at: m(-30) }], "bottle", T0);
+  it("feed while awake inserts a feed and stays awake", () => {
+    const { events, event, closedRestId } = feed([], "bottle", T0);
     expect(event).toMatchObject({ kind: "feed", source: "bottle", at: T0 });
-    expect(deriveState(events, T0).name).toBe("asleep");
+    expect(closedRestId).toBeUndefined();
+    expect(deriveState(events, T0)).toEqual({ name: "awake", since: T0 });
     expect(events[0]).toBe(event); // newest first
+  });
+  it("feed while asleep wakes the baby and closes the sleep at the feed", () => {
+    const { events, closedRestId } = feed([{ id: "a", kind: "sleep", at: m(-30) }], "breast", T0);
+    expect(closedRestId).toBe("a");
+    expect(events.find((e) => e.id === "a")).toMatchObject({ endAt: T0 });
+    expect(deriveState(events, T0)).toEqual({ name: "awake", since: T0 });
+  });
+  it("feed backfilled to before the sleep started leaves the sleep open", () => {
+    const { events, closedRestId } = feed([{ id: "a", kind: "sleep", at: m(-30) }], "breast", m(-40));
+    expect(closedRestId).toBeUndefined();
+    expect(deriveState(events, T0).name).toBe("asleep");
+  });
+  it("reopenRest undoes the wake caused by a dream feed", () => {
+    const { events } = feed([{ id: "a", kind: "sleep", at: m(-30) }], "breast", T0);
+    const back = reopenRest(events, "a");
+    expect(deriveState(back, T0)).toEqual({ name: "asleep", since: m(-30), eventId: "a" });
   });
   it("startRest from awake opens a rest", () => {
     const { events, event } = startRest([], "nap", T0);

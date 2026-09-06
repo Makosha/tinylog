@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Moon, Sun } from "lucide-react";
-import { META, type LogEvent } from "@/domain/events";
+import { LABEL, type LogEvent } from "@/domain/events";
 import { deriveState } from "@/domain/state";
 import { dayStats, eventsForDay } from "@/domain/stats";
 import { durationLabel } from "@/domain/time";
 import { actions, useStore } from "@/store/store";
+import { applyTheme, onSystemThemeChange, resolveTheme } from "@/store/theme";
 import { ActionButtons, type Action } from "@/components/ActionButtons";
+import { CapturePanel, type Capture } from "@/components/CapturePanel";
 import { EditSheet } from "@/components/EditSheet";
-import { JustLogged, type Recent } from "@/components/JustLogged";
+import { ICON } from "@/components/icons";
 import { StatTile } from "@/components/StatTile";
 import { StateCard } from "@/components/StateCard";
 import { Timeline } from "@/components/Timeline";
@@ -32,13 +33,15 @@ const buzz = () => navigator.vibrate?.(20);
 export function Home() {
   const { events, prefs, storageOk } = useStore();
   const now = useNow();
-  const [recent, setRecent] = useState<Recent | null>(null);
+  const [capture, setCapture] = useState<Capture | null>(null);
+  const [stayedAsleep, setStayedAsleep] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("daylight", prefs.daylight);
-  }, [prefs.daylight]);
+    applyTheme(prefs.theme);
+    return onSystemThemeChange(() => applyTheme(prefs.theme));
+  }, [prefs.theme]);
 
   useEffect(() => {
     if (!storageOk) setToast("Can't save on this device");
@@ -58,23 +61,21 @@ export function Home() {
     const tappedAt = Date.now();
     buzz();
     if (a.type === "feed") {
-      const e = actions.feed(a.source, tappedAt);
-      setRecent({ eventId: e.id, action: "feed", tappedAt });
-      setToast(`${META[a.source].emoji} ${META[a.source].label} logged`);
+      const r = actions.feed(a.source, tappedAt);
+      setCapture({ eventId: r.event.id, action: "feed", tappedAt, ...(r.closedRestId ? { closedRestId: r.closedRestId } : {}) });
+      setStayedAsleep(false);
     } else if (a.type === "rest") {
       const e = actions.startRest(a.kind, tappedAt);
-      setRecent({ eventId: e.id, action: "rest", tappedAt });
-      setToast(`${META[a.kind].emoji} ${META[a.kind].label} started`);
+      setCapture({ eventId: e.id, action: "rest", tappedAt });
     } else {
       const e = actions.wake(tappedAt);
-      if (!e) return;
-      setRecent({ eventId: e.id, action: "wake", tappedAt });
-      setToast(`${META.wake.emoji} Awake`);
+      if (e) setCapture({ eventId: e.id, action: "wake", tappedAt });
     }
   };
 
-  const recentEvent = recent ? events.find((e) => e.id === recent.eventId) : undefined;
+  const captured = capture ? events.find((e) => e.id === capture.eventId) : undefined;
   const editing = editingId ? events.find((e) => e.id === editingId) : undefined;
+  const light = resolveTheme(prefs.theme) === "light";
 
   return (
     <main className="safe-top mx-auto min-h-dvh w-full max-w-md px-4 pb-16">
@@ -87,11 +88,11 @@ export function Home() {
         </div>
         <button
           type="button"
-          onClick={() => actions.setPrefs({ daylight: !prefs.daylight })}
-          aria-label={prefs.daylight ? "Switch to night mode" : "Switch to day mode"}
-          className="flex size-11 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground active:scale-95"
+          onClick={() => actions.setPrefs({ theme: light ? "dark" : "light" })}
+          aria-label={light ? "Switch to night mode" : "Switch to day mode"}
+          className="flex size-11 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground active:scale-95"
         >
-          {prefs.daylight ? <Moon className="size-5" /> : <Sun className="size-5" />}
+          {light ? <ICON.sleep className="size-5" /> : <ICON.awake className="size-5" />}
         </button>
       </header>
 
@@ -100,32 +101,42 @@ export function Home() {
       </div>
 
       <div className="mb-4">
-        <ActionButtons state={state} onAction={act} />
+        {capture && captured ? (
+          <CapturePanel
+            capture={capture}
+            event={captured}
+            lastMl={captured.kind === "feed" ? prefs.lastMl[captured.source] : undefined}
+            stayedAsleep={stayedAsleep}
+            onStayedAsleep={(v) => {
+              setStayedAsleep(v);
+              if (!capture.closedRestId) return;
+              if (v) actions.reopenRest(capture.closedRestId);
+              else actions.update(capture.closedRestId, { endAt: captured.at });
+            }}
+            onPatch={(p) => {
+              actions.update(capture.eventId, p);
+              // the interrupted rest ends when the feed happened
+              if (p.at !== undefined && capture.closedRestId && !stayedAsleep) actions.update(capture.closedRestId, { endAt: p.at });
+            }}
+            onUndo={() => {
+              if (capture.action === "wake") actions.reopenRest(capture.eventId);
+              else {
+                actions.delete(capture.eventId);
+                if (capture.closedRestId) actions.reopenRest(capture.closedRestId);
+              }
+              setCapture(null);
+              setToast("Undone");
+            }}
+            onDone={() => setCapture(null)}
+          />
+        ) : (
+          <ActionButtons state={state} onAction={act} />
+        )}
       </div>
-
-      {recent ? (
-        <JustLogged
-          recent={recent}
-          event={recentEvent}
-          lastMl={recentEvent?.kind === "feed" ? prefs.lastMl[recentEvent.source] : undefined}
-          onTime={(ms) => actions.update(recent.eventId, recent.action === "wake" ? { endAt: ms } : { at: ms })}
-          onMl={(ml) => actions.update(recent.eventId, { ml })}
-          onUndo={() => {
-            if (recent.action === "wake") actions.reopenRest(recent.eventId);
-            else actions.delete(recent.eventId);
-            setRecent(null);
-          }}
-          onDismiss={() => setRecent(null)}
-        />
-      ) : null}
 
       <section className="mb-6 grid grid-cols-3 gap-2" aria-label="Today">
         <StatTile label="Feeds" value={`${stats.feeds}`} sub={stats.ml ? `${stats.ml}ml` : "today"} />
-        <StatTile
-          label="Rest"
-          value={`${Math.floor(stats.restMins / 60)}h`}
-          sub={`${stats.restMins % 60}m today`}
-        />
+        <StatTile label="Rest" value={`${Math.floor(stats.restMins / 60)}h`} sub={`${stats.restMins % 60}m today`} />
         <StatTile
           label="Last feed"
           value={stats.lastFeed ? durationLabel(stats.lastFeed.at, now) : "—"}
@@ -133,12 +144,12 @@ export function Home() {
         />
       </section>
 
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Today</h2>
+      <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Today</h2>
       <Timeline
         events={today}
         now={now}
         onSelect={(e: LogEvent) => {
-          setRecent(null);
+          setCapture(null);
           setEditingId(e.id);
         }}
       />
@@ -153,6 +164,7 @@ export function Home() {
           onDelete={() => {
             actions.delete(editing.id);
             setEditingId(null);
+            setToast(`${LABEL[editing.kind === "feed" ? editing.source : editing.kind]} deleted`);
           }}
           onClose={() => setEditingId(null)}
         />

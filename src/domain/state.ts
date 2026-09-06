@@ -1,4 +1,4 @@
-import { isRest, newId, sortEvents, type FeedSource, type LogEvent, type RestEvent, type RestKind } from "./events";
+import { isRest, newId, sortEvents, type BreastSide, type FeedSource, type LogEvent, type RestEvent, type RestKind } from "./events";
 
 export type BabyState =
   | { name: "awake"; since: number }
@@ -25,8 +25,22 @@ interface Result<E extends LogEvent | null> {
   event: E;
 }
 
-export function feed(events: LogEvent[], source: FeedSource, at: number): Result<LogEvent> {
+export interface FeedResult extends Result<LogEvent> {
+  /** the rest that this feed closed (the baby woke up to feed), if any */
+  closedRestId?: string;
+}
+
+/**
+ * A feed while asleep or napping wakes the baby: the open rest is closed at
+ * the feed time. A feed backfilled to before the rest started leaves it open.
+ */
+export function feed(events: LogEvent[], source: FeedSource, at: number): FeedResult {
   const event: LogEvent = { id: newId(), kind: "feed", at, source };
+  const open = openRest(events);
+  if (open && at >= open.at) {
+    const next = events.map((e) => (e.id === open.id ? { ...e, endAt: at } : e));
+    return { events: sortEvents([event, ...next]), event, closedRestId: open.id };
+  }
   return { events: sortEvents([event, ...events]), event };
 }
 
@@ -53,7 +67,7 @@ export function reopenRest(events: LogEvent[], id: string): LogEvent[] {
   return events.map((e) => (e.id === id && isRest(e) ? { ...e, endAt: undefined } : e));
 }
 
-export type EventPatch = Partial<{ at: number; endAt: number | undefined; source: FeedSource; ml: number | undefined }>;
+export type EventPatch = Partial<{ at: number; endAt: number | undefined; source: FeedSource; ml: number | undefined; side: BreastSide | undefined }>;
 
 export function updateEvent(events: LogEvent[], id: string, patch: EventPatch): LogEvent[] {
   return sortEvents(
@@ -61,7 +75,10 @@ export function updateEvent(events: LogEvent[], id: string, patch: EventPatch): 
       if (e.id !== id) return e;
       const next = { ...e, ...patch } as LogEvent;
       if (isRest(next) && next.endAt !== undefined && next.endAt < next.at) next.endAt = next.at;
-      if (next.kind === "feed" && (next.ml === undefined || next.ml <= 0)) delete next.ml;
+      if (next.kind === "feed") {
+        if (next.ml === undefined || next.ml <= 0) delete next.ml;
+        if (next.source !== "breast" || next.side === undefined) delete next.side;
+      }
       return next;
     }),
   );
