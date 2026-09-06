@@ -43,3 +43,17 @@ export function dayLabel(ms: number, nowMs = Date.now()) {
   if (isSameDay(ms, nowMs - 24 * 60 * MIN)) return "yesterday";
   return new Date(ms).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
+
+const GRID = 5 * MIN;
+
+/**
+ * Move `value` by `stepMins`, then snap to the 5-minute grid in the direction
+ * of the move: −5 at 1:44 gives 1:40, +5 at 1:44 gives 1:45, −5 at 1:40 gives 1:35.
+ */
+export function stepSnapped(value: number, stepMins: number) {
+  const target = value + stepMins * MIN;
+  const offset = new Date(target).getTimezoneOffset() * MIN;
+  const local = target - offset;
+  const snapped = stepMins < 0 ? Math.ceil(local / GRID) * GRID : Math.floor(local / GRID) * GRID;
+  return snapped + offset;
+}

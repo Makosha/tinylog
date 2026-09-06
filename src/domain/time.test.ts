@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { durationLabel, resolveTimeOfDay, isSameDay } from "./time";
+import { durationLabel, resolveTimeOfDay, isSameDay, stepSnapped } from "./time";
 
 describe("durationLabel", () => {
   it("formats minutes and hours", () => {
@@ -31,5 +31,27 @@ describe("resolveTimeOfDay", () => {
     const base = new Date(2026, 8, 5, 9, 0).getTime();
     const out = resolveTimeOfDay(base, "23:00", now);
     expect(new Date(out).getDate()).toBe(5);
+  });
+});
+
+describe("stepSnapped", () => {
+  const at = (h: number, m: number) => new Date(2026, 8, 7, h, m).getTime();
+  const hm = (ms: number) => [new Date(ms).getHours(), new Date(ms).getMinutes()];
+  it("−5 from an unaligned time snaps down to the previous mark", () => {
+    expect(hm(stepSnapped(at(1, 44), -5))).toEqual([1, 40]);
+  });
+  it("+5 from an unaligned time snaps up to the next mark", () => {
+    expect(hm(stepSnapped(at(1, 44), 5))).toEqual([1, 45]);
+  });
+  it("moves a full step when already aligned", () => {
+    expect(hm(stepSnapped(at(1, 40), -5))).toEqual([1, 35]);
+    expect(hm(stepSnapped(at(1, 40), 5))).toEqual([1, 45]);
+  });
+  it("−1h and +1h land on the grid too", () => {
+    expect(hm(stepSnapped(at(1, 44), -60))).toEqual([0, 45]);
+    expect(hm(stepSnapped(at(1, 44), 60))).toEqual([2, 40]);
+  });
+  it("keeps seconds at zero", () => {
+    expect(new Date(stepSnapped(at(1, 44) + 37_000, -5)).getSeconds()).toBe(0);
   });
 });

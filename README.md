@@ -28,7 +28,7 @@ Awake ──Breast / Bottle──▶ Awake
 
 Every big button saves the event at "now" in one tap. A capture panel then
 replaces the buttons for 10 seconds with only the fields that matter for
-that event: start time (−1h / −5 / +5 / +1h stepper), side for breast,
+that event: start time (−1h / −5 / +5 / +1h stepper, snapped to 5-minute marks), side for breast,
 amount for feeds, and the dream-feed toggle when the feed interrupted a
 sleep. Touching the panel pauses the countdown; Done closes it; Undo removes
 the event. Tap any timeline row to edit start, end, source, side, amount, or

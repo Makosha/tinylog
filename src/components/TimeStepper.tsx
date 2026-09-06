@@ -1,4 +1,4 @@
-import { formatTime } from "@/domain/time";
+import { formatTime, stepSnapped } from "@/domain/time";
 
 const MIN = 60_000;
 
@@ -18,7 +18,7 @@ export function TimeStepper({
   min?: number;
 }) {
   const set = (ms: number) => onChange(Math.max(min ?? -Infinity, Math.min(max, ms)));
-  const step = (mins: number) => set(value + mins * MIN);
+  const step = (mins: number) => set(stepSnapped(value, mins));
   const isNow = Math.abs(max - value) < MIN;
   return (
     <div className="flex items-center gap-1.5">
