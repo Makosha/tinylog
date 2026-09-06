@@ -17,12 +17,12 @@ export interface Capture {
   closedRestId?: string;
 }
 
-const COUNTDOWN = 5_000;
+const COUNTDOWN = 10_000;
 const TICK = 50;
 
 /**
  * Replaces the action buttons right after a tap. Shows the fields that
- * matter for that event with a 5 s countdown; any touch pauses it.
+ * matter for that event with a 10 s countdown; any touch pauses it.
  */
 export function CapturePanel({
   capture,
@@ -87,17 +87,14 @@ export function CapturePanel({
           <p className="font-display text-xl font-bold leading-tight text-foreground">{title}</p>
           <p className="text-xs text-muted-foreground">{paused ? "saved · tap done when finished" : "saved · closing in a moment"}</p>
         </div>
-        {paused ? (
-          <button
-            type="button"
-            onClick={onDone}
-            className="surface-warm flex h-11 items-center gap-1.5 rounded-2xl px-4 text-sm font-bold active:scale-95"
-          >
-            <CheckIcon className="size-4" /> Done
-          </button>
-        ) : (
-          <Ring fraction={left / COUNTDOWN} seconds={Math.ceil(left / 1000)} />
-        )}
+        <button
+          type="button"
+          onClick={onDone}
+          className="surface-warm relative flex h-11 items-center gap-1.5 rounded-2xl px-4 text-sm font-bold active:scale-95"
+        >
+          {paused ? null : <Ring fraction={left / COUNTDOWN} />}
+          <CheckIcon className="size-4" /> Done
+        </button>
       </div>
 
       <Field label={isWake ? "Ended" : "Started"}>
@@ -139,27 +136,27 @@ export function CapturePanel({
   );
 }
 
-function Ring({ fraction, seconds }: { fraction: number; seconds: number }) {
-  const r = 16;
-  const len = 2 * Math.PI * r;
+/** Progress outline around the Done button, draining as the countdown runs. */
+function Ring({ fraction }: { fraction: number }) {
   return (
-    <span className="relative flex size-11 items-center justify-center" aria-label={`closes in ${seconds} seconds`}>
-      <svg viewBox="0 0 40 40" className="absolute inset-0 -rotate-90">
-        <circle cx="20" cy="20" r={r} className="stroke-border" strokeWidth="3" fill="none" />
-        <circle
-          cx="20"
-          cy="20"
-          r={r}
-          className="stroke-primary"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={len}
-          strokeDashoffset={len * (1 - fraction)}
-        />
-      </svg>
-      <span className="font-display text-sm font-bold tabular-nums text-foreground">{seconds}</span>
-    </span>
+    <svg className="pointer-events-none absolute -inset-1" aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none">
+      <rect
+        x="2"
+        y="2"
+        width="96"
+        height="96"
+        rx="18"
+        ry="18"
+        fill="none"
+        className="stroke-primary"
+        strokeWidth="4"
+        vectorEffect="non-scaling-stroke"
+        pathLength={100}
+        strokeDasharray="100"
+        strokeDashoffset={100 * (1 - fraction)}
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
