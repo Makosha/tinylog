@@ -7,6 +7,9 @@ import { DateField } from "./DatePicker";
 import { Field } from "./Field";
 import { CloseIcon, DownloadIcon } from "./icons";
 import { Sheet } from "./Sheet";
+import { Switch } from "./Switch";
+import { isIOS } from "@/store/install";
+import { notificationsSupported, permissionState, requestPermission, showNotification } from "@/store/notify";
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -23,6 +26,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { t, lang } = useT();
   const setUnit = <K extends keyof Units>(k: K, v: Units[K]) => actions.setPrefs({ units: { ...units, [k]: v } });
   const [name, setName] = useState(prefs.babyName ?? "");
+  const [perm, setPerm] = useState(permissionState());
+  const rem = prefs.reminders ?? { enabled: false, feed: true, rest: true, stale: true };
+  const setRem = (patch: Partial<typeof rem>) => actions.setPrefs({ reminders: { ...rem, ...patch } });
+  const toggleReminders = async (on: boolean) => {
+    if (on && perm !== "granted") {
+      const p = await requestPermission();
+      setPerm(p);
+      if (p !== "granted") return;
+    }
+    setRem({ enabled: on });
+  };
   const input = "h-12 w-full rounded-2xl border border-border bg-secondary/60 px-3 text-base text-foreground outline-none focus:border-primary";
 
   return (
@@ -85,6 +99,40 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </Chip>
         </div>
       </Field>
+      {notificationsSupported() ? (
+        <Field label={t.reminders.title}>
+          <p className="mb-2 text-sm text-muted-foreground">{t.reminders.body}</p>
+          <div className={`flex h-14 items-center justify-between rounded-2xl border px-3 ${rem.enabled ? "border-primary/40 bg-primary/10" : "border-border bg-secondary/40"}`}>
+            <p className="text-sm font-bold text-foreground">{t.reminders.enable}</p>
+            <Switch checked={rem.enabled && perm === "granted"} label={t.reminders.enable} onChange={toggleReminders} />
+          </div>
+          {perm === "denied" ? <p className="mt-2 text-xs text-destructive">{t.reminders.permissionDenied}</p> : null}
+          {rem.enabled && perm === "granted" ? (
+            <div className="mt-2 space-y-2">
+              {(
+                [
+                  ["feed", t.reminders.feed],
+                  ["rest", t.reminders.rest],
+                  ["stale", t.reminders.stale],
+                ] as const
+              ).map(([k, label]) => (
+                <div key={k} className="flex h-12 items-center justify-between rounded-2xl border border-border bg-secondary/40 px-3">
+                  <p className="text-sm text-foreground">{label}</p>
+                  <Switch checked={rem[k]} label={label} onChange={(v) => setRem({ [k]: v })} />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => showNotification(t.app.name, t.reminders.feedDue, "test")}
+                className="h-11 w-full rounded-2xl border border-border bg-secondary/60 text-sm font-bold text-foreground active:scale-95"
+              >
+                {t.reminders.test}
+              </button>
+            </div>
+          ) : null}
+          {isIOS() ? <p className="mt-2 text-xs text-muted-foreground">{t.reminders.iosNote}</p> : null}
+        </Field>
+      ) : null}
       <Field label={t.settings.units}>
         <div className="grid grid-cols-2 gap-2">
           <UnitRow label={t.settings.temperature} value={units.temp} options={[["c", "°C"], ["f", "°F"]]} onChange={(v) => setUnit("temp", v)} />

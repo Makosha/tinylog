@@ -26,6 +26,7 @@ export interface Prefs {
   units?: Units;
   lang?: "en" | "ru" | "kk" | "es" | "fr" | "de";
   welcomeDone?: boolean;
+  reminders?: { enabled: boolean; feed: boolean; rest: boolean; stale: boolean };
 }
 
 interface Snapshot {

@@ -33,6 +33,16 @@ name, birth date and sex. The About tab carries the story, privacy, WHO
 attribution, version, and a feedback box that posts to a Google Form
 (fill the IDs in `src/feedback.ts`; the box hides until then).
 
+## Reminders
+
+Settings can turn on state-driven reminders: a feed when the baby's usual
+interval is up, a nap or night sleep when the age-based wake window is
+used, and "still asleep?" when an open rest runs implausibly long. The
+home card always shows the next one as text. Notifications fire while the
+page is alive: Android keeps a backgrounded web app alive for a while,
+iOS suspends it, so on iPhone they appear only while the app is open.
+Reliable closed-app reminders would need a push server.
+
 ## How it works
 
 The baby is always in one state, derived from the event log:

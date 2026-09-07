@@ -6,6 +6,8 @@ import { useUnits } from "@/store/store";
 import { fill, useT } from "@/i18n/index";
 import { agoLabel, detailOf, fmtTime, labelOf } from "@/i18n/labels";
 import { ICON } from "./icons";
+import { upcomingReminders } from "@/domain/reminders";
+import { useStore } from "@/store/store";
 
 const LOOK = {
   awake: { Icon: ICON.awake, cls: "text-wake border-wake/30 bg-wake/10" },
@@ -37,6 +39,9 @@ export function StateCard({
   const { Icon, cls } = LOOK[state.name];
   const units = useUnits();
   const { t, locale } = useT();
+  const { events, prefs } = useStore();
+  const next = upcomingReminders(events, state, now, prefs.babyDob).find((r) => r.kind !== "stale" && r.at > now + 60_000);
+  const nextLine = next ? fill(next.kind === "feed" ? t.reminders.nextFeed : t.reminders.nextRest, { t: durationLabel(now, next.at) }) : null;
   const lf = stats.lastFeed;
   const feedLine = lf
     ? `${t.kind[lf.source].toLowerCase()} ${agoLabel(t, now - lf.at)}${detailOf(t, lf, units) ? ` · ${detailOf(t, lf, units)}` : ""}`
@@ -56,6 +61,7 @@ export function StateCard({
         <p className="font-display text-3xl font-bold tabular-nums text-foreground">{durationLabel(state.since, now)}</p>
       </div>
 
+      {nextLine && !stale ? <p className="mt-2 text-xs font-semibold text-muted-foreground">{nextLine}</p> : null}
       {stale ? (
         <div className="mt-3 rounded-2xl border border-border bg-card p-3">
           <p className="text-sm font-bold text-foreground">{state.name === "asleep" ? t.home.stillAsleepQ : t.home.stillNappingQ}</p>

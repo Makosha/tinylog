@@ -10,12 +10,14 @@ import { useRoute } from "@/store/route";
 import { useStore } from "@/store/store";
 import { applyTheme, onSystemThemeChange } from "@/store/theme";
 import { useToast } from "@/store/toast";
+import { useReminderScheduler } from "@/store/notify";
 import { LOCALE } from "@/i18n/index";
 
 export default function App() {
   const route = useRoute();
   const { prefs, hydrated } = useStore();
   const toast = useToast();
+  useReminderScheduler();
 
   useEffect(() => {
     applyTheme(prefs.theme);

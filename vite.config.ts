@@ -18,7 +18,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg"],
+      includeAssets: ["icon.svg", "sw-notify.js"],
       manifest: {
         name: "TinyLog",
         short_name: "TinyLog",
@@ -35,7 +35,7 @@ export default defineConfig({
           { src: "icon-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
-      workbox: { globPatterns: ["**/*.{js,css,html,svg,png,woff2}"] },
+      workbox: { globPatterns: ["**/*.{js,css,html,svg,png,woff2}"], importScripts: ["sw-notify.js"] },
     }),
   ],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
