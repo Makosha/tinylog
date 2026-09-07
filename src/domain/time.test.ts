@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { durationLabel, resolveTimeOfDay, isSameDay, stepSnapped } from "./time";
+import { durationLabel, resolveTimeOfDay, isSameDay, stepSnapped, ageLabel } from "./time";
 
 describe("durationLabel", () => {
   it("formats minutes and hours", () => {
@@ -53,5 +53,14 @@ describe("stepSnapped", () => {
   });
   it("keeps seconds at zero", () => {
     expect(new Date(stepSnapped(at(1, 44) + 37_000, -5)).getSeconds()).toBe(0);
+  });
+});
+
+describe("ageLabel", () => {
+  const born = new Date(2026, 8, 2).getTime();
+  it("counts days then weeks", () => {
+    expect(ageLabel(born, new Date(2026, 8, 2, 15).getTime())).toBe("day 1");
+    expect(ageLabel(born, new Date(2026, 8, 7).getTime())).toBe("day 6");
+    expect(ageLabel(born, new Date(2026, 9, 10).getTime())).toBe("5 weeks");
   });
 });

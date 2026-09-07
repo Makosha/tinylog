@@ -1,4 +1,5 @@
 const MIN = 60_000;
+const HOUR = 60 * MIN;
 
 export function formatTime(ms: number) {
   return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -40,7 +41,7 @@ export function resolveTimeOfDay(baseMs: number, hhmm: string, nowMs = Date.now(
 
 export function dayLabel(ms: number, nowMs = Date.now()) {
   if (isSameDay(ms, nowMs)) return "today";
-  if (isSameDay(ms, nowMs - 24 * 60 * MIN)) return "yesterday";
+  if (isSameDay(ms, nowMs - 24 * HOUR)) return "yesterday";
   return new Date(ms).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
@@ -56,4 +57,14 @@ export function stepSnapped(value: number, stepMins: number) {
   const local = target - offset;
   const snapped = stepMins < 0 ? Math.ceil(local / GRID) * GRID : Math.floor(local / GRID) * GRID;
   return snapped + offset;
+}
+
+/** "day 6" from a birth date; day 1 is the birth day. */
+export function ageLabel(dobMs: number, nowMs: number) {
+  const days = Math.floor((startOfDay(nowMs) - startOfDay(dobMs)) / (24 * HOUR)) + 1;
+  if (days < 1) return "";
+  if (days <= 28) return `day ${days}`;
+  const weeks = Math.floor((days - 1) / 7);
+  if (weeks < 16) return `${weeks} weeks`;
+  return `${Math.floor((days - 1) / 30.44)} months`;
 }

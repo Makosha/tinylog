@@ -61,6 +61,7 @@
   --color-sleep: var(--sleep);
   --color-wake: var(--wake);
   --color-nap: var(--nap);
+  --color-breast: var(--breast);
   --font-display: "Baloo 2", ui-rounded, system-ui, sans-serif;
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
 }
@@ -82,12 +83,13 @@
   --muted-foreground: oklch(0.72 0.03 70);
   --accent: oklch(0.32 0.04 40);
   --accent-foreground: oklch(0.94 0.02 80);
-  --destructive: oklch(0.6 0.16 25);
+  --destructive: oklch(0.66 0.19 12);
   --destructive-foreground: oklch(0.96 0.02 80);
   --border: oklch(0.34 0.025 60);
   --input: oklch(0.32 0.025 60);
   --ring: oklch(0.78 0.13 62);
   --feed: oklch(0.8 0.12 200);
+  --breast: oklch(0.8 0.11 350);
   --sleep: oklch(0.72 0.11 290);
   --wake: oklch(0.83 0.14 85);
   --nap: oklch(0.78 0.1 155);
@@ -122,10 +124,12 @@
   --border: oklch(0.9 0.02 75);
   --input: oklch(0.9 0.02 75);
   --ring: oklch(0.68 0.15 45);
-  --feed: oklch(0.62 0.12 220);
-  --sleep: oklch(0.55 0.13 290);
-  --wake: oklch(0.68 0.15 75);
-  --nap: oklch(0.58 0.11 160);
+  --feed: oklch(0.48 0.13 225);
+  --breast: oklch(0.5 0.14 350);
+  --sleep: oklch(0.48 0.13 290);
+  --wake: oklch(0.6 0.15 75);
+  --nap: oklch(0.46 0.11 160);
+  --destructive: oklch(0.55 0.19 12);
 }
 
 @layer base {
@@ -195,6 +199,11 @@ button { touch-action: manipulation; user-select: none; -webkit-user-select: non
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-xl);
+  border-radius: 9999px;
   background: color-mix(in oklch, currentColor 14%, transparent);
+}
+
+@keyframes drain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }

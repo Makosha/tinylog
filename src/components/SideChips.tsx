@@ -9,7 +9,7 @@ const SIDES: { key: BreastSide; label: string }[] = [
 
 export function SideChips({ value, onChange }: { value: BreastSide | undefined; onChange: (s: BreastSide | undefined) => void }) {
   return (
-    <div className="flex gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {SIDES.map((s) => (
         <Chip key={s.key} active={value === s.key} onClick={() => onChange(value === s.key ? undefined : s.key)}>
           {s.label}

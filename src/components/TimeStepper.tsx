@@ -1,10 +1,11 @@
 import { formatTime, stepSnapped } from "@/domain/time";
+import { HoldButton } from "./Stepper";
 
 const MIN = 60_000;
 
 /**
- * Time adjuster without native inputs: big time, ±5m and ±1h around it,
- * and a "now" reset. `max` (default: now) caps the value.
+ * Time adjuster: −1h / −5 / [time] / +5 / +1h. Hold to repeat. A small
+ * "now" chip appears once the value differs from `max`.
  */
 export function TimeStepper({
   value,
@@ -20,33 +21,26 @@ export function TimeStepper({
   const set = (ms: number) => onChange(Math.max(min ?? -Infinity, Math.min(max, ms)));
   const step = (mins: number) => set(stepSnapped(value, mins));
   const isNow = Math.abs(max - value) < MIN;
+  const atMin = min !== undefined && value <= min;
+  const btn = "rounded-2xl border border-border bg-secondary/60";
   return (
     <div className="flex items-center gap-1.5">
-      <StepBtn label="−1h" onClick={() => step(-60)}>
+      <HoldButton label="−1h" onFire={() => step(-60)} disabled={atMin} className={btn}>
         −1h
-      </StepBtn>
-      <StepBtn label="−5m" onClick={() => step(-5)}>
+      </HoldButton>
+      <HoldButton label="−5m" onFire={() => step(-5)} disabled={atMin} className={btn}>
         −5
-      </StepBtn>
-      <button
-        type="button"
-        onClick={() => set(max)}
-        title="Reset to now"
-        className={`flex h-12 min-w-24 flex-1 flex-col items-center justify-center rounded-2xl border tabular-nums transition-colors ${
-          isNow ? "border-border bg-secondary/60" : "border-primary/50 bg-primary/10"
-        }`}
-      >
+      </HoldButton>
+      <div className="flex h-12 min-w-24 flex-1 flex-col items-center justify-center rounded-2xl border border-border bg-secondary/60 tabular-nums">
         <span className="font-display text-lg font-bold leading-none text-foreground">{formatTime(value)}</span>
-        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {isNow ? "now" : ago(max - value)}
-        </span>
-      </button>
-      <StepBtn label="+5m" onClick={() => step(5)} disabled={isNow}>
+        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{isNow ? "now" : ago(max - value)}</span>
+      </div>
+      <HoldButton label="+5m" onFire={() => step(5)} disabled={isNow} className={btn}>
         +5
-      </StepBtn>
-      <StepBtn label="+1h" onClick={() => step(60)} disabled={max - value < 60 * MIN}>
+      </HoldButton>
+      <HoldButton label="+1h" onFire={() => step(60)} disabled={max - value < 60 * MIN} className={btn}>
         +1h
-      </StepBtn>
+      </HoldButton>
     </div>
   );
 }
@@ -57,28 +51,4 @@ function ago(ms: number) {
   const h = Math.floor(m / 60);
   const r = m % 60;
   return r ? `${h}h ${r}m ago` : `${h}h ago`;
-}
-
-function StepBtn({
-  label,
-  onClick,
-  disabled,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
-      className="flex h-12 w-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-secondary/60 text-sm font-bold tabular-nums text-foreground active:scale-95 disabled:opacity-30"
-    >
-      {children}
-    </button>
-  );
 }

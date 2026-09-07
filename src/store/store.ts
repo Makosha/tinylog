@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { migrateV1, sortEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
+import { migrateV1, parseEvents, sortEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
 import * as S from "@/domain/state";
 
 const KEY = "tinylog.events.v2";
@@ -8,9 +8,15 @@ const PREFS_KEY = "tinylog.prefs.v1";
 
 export type Theme = "system" | "light" | "dark";
 
-interface Prefs {
+export interface Prefs {
   theme: Theme;
   lastMl: Partial<Record<FeedSource, number>>;
+  lastMinutes?: number;
+  babyName?: string;
+  /** epoch ms of the birth day */
+  babyDob?: number;
+  /** "still asleep?" prompt snoozed until this time */
+  staleSnoozedUntil?: number;
 }
 
 interface Snapshot {
@@ -44,7 +50,8 @@ function hydrate() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       try {
-        events = sortEvents(JSON.parse(raw) as LogEvent[]);
+        events = parseEvents(JSON.parse(raw)) ?? [];
+        if (!events.length && raw !== "[]") localStorage.setItem(`${KEY}.corrupt`, raw);
       } catch {
         localStorage.setItem(`${KEY}.corrupt`, raw);
       }
@@ -83,11 +90,24 @@ function setEvents(events: LogEvent[]) {
   emit();
 }
 
+function setPrefs(patch: Partial<Prefs>) {
+  snap = { ...snap, prefs: { ...snap.prefs, ...patch } };
+  persist();
+  emit();
+}
+
 export const actions = {
   feed(source: FeedSource, at = Date.now()) {
-    const r = S.feed(snap.events, source, at);
+    const lastBottle = snap.events.find((e) => e.kind === "feed" && e.source === "bottle" && e.ml);
+    const ml = snap.prefs.lastMl.bottle ?? (lastBottle?.kind === "feed" ? lastBottle.ml : undefined);
+    const r = S.feed(snap.events, source, at, { ml });
     setEvents(r.events);
     return r;
+  },
+  diaper(at = Date.now()) {
+    const r = S.diaper(snap.events, at);
+    setEvents(r.events);
+    return r.event;
   },
   startRest(kind: RestKind, at = Date.now()) {
     const r = S.startRest(snap.events, kind, at);
@@ -102,19 +122,45 @@ export const actions = {
   reopenRest(id: string) {
     setEvents(S.reopenRest(snap.events, id));
   },
+  /** "Stayed asleep" for a feed edited after the fact. */
+  mergeAroundFeed(feedId: string) {
+    setEvents(S.mergeAroundFeed(snap.events, feedId));
+  },
   update(id: string, patch: S.EventPatch) {
     setEvents(S.updateEvent(snap.events, id, patch));
-    if (patch.ml !== undefined && patch.source === undefined) {
-      const e = snap.events.find((x) => x.id === id);
-      if (e && e.kind === "feed") actions.setPrefs({ lastMl: { ...snap.prefs.lastMl, [e.source]: patch.ml } });
+    const e = snap.events.find((x) => x.id === id);
+    if (e?.kind === "feed") {
+      if (patch.ml !== undefined && e.source === "bottle") setPrefs({ lastMl: { ...snap.prefs.lastMl, bottle: patch.ml } });
+      if (patch.minutes !== undefined) setPrefs({ lastMinutes: patch.minutes });
     }
   },
+  /** Returns the removed event so it can be restored. */
   delete(id: string) {
+    const removed = snap.events.find((e) => e.id === id);
     setEvents(S.deleteEvent(snap.events, id));
+    return removed;
   },
-  setPrefs(patch: Partial<Prefs>) {
-    snap = { ...snap, prefs: { ...snap.prefs, ...patch } };
-    persist();
-    emit();
+  restore(event: LogEvent) {
+    setEvents(S.restoreEvent(snap.events, event));
+  },
+  setPrefs,
+  exportJson() {
+    return JSON.stringify({ app: "tinylog", version: 2, exportedAt: new Date().toISOString(), prefs: snap.prefs, events: snap.events }, null, 2);
+  },
+  /** Replaces all events. Returns the number imported, or null if the file is not a TinyLog export. */
+  importJson(text: string): number | null {
+    try {
+      const raw = JSON.parse(text) as { events?: unknown; prefs?: Partial<Prefs> };
+      const events = parseEvents(Array.isArray(raw) ? raw : raw.events);
+      if (!events) return null;
+      if (raw.prefs && typeof raw.prefs === "object") {
+        const { babyName, babyDob, lastMl, lastMinutes } = raw.prefs;
+        setPrefs({ ...(babyName ? { babyName } : {}), ...(babyDob ? { babyDob } : {}), ...(lastMl ? { lastMl } : {}), ...(lastMinutes ? { lastMinutes } : {}) });
+      }
+      setEvents(sortEvents(events));
+      return events.length;
+    } catch {
+      return null;
+    }
   },
 };

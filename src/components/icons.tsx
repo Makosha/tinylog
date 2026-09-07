@@ -15,10 +15,10 @@ const base = (p: P): P => ({
 /** Feeding bottle with cap and graduation marks. */
 export const BottleIcon = (p: P) => (
   <svg {...base(p)}>
-    <path d="M10.5 2.5h3v2h-3z" fill="currentColor" stroke="none" />
-    <path d="M9.5 4.5h5l.5 3h-6z" />
-    <path d="M8.5 7.5h7v11a3 3 0 0 1-3 3h-1a3 3 0 0 1-3-3z" />
-    <path d="M8.5 11h2.5M8.5 14h2.5M8.5 17h2.5" />
+    <path d="M10 2h4v2.5h-4z" fill="currentColor" stroke="none" />
+    <path d="M8.5 4.5h7l.5 3.5h-8z" />
+    <path d="M6.5 8h11v10a3.5 3.5 0 0 1-3.5 3.5h-4A3.5 3.5 0 0 1 6.5 18z" />
+    <path d="M6.5 11.5h3.5M6.5 14.5h3.5M6.5 17.5h3.5" />
   </svg>
 );
 
@@ -35,18 +35,16 @@ export const BreastIcon = (p: P) => (
 /** Crescent moon with two stars. */
 export const MoonIcon = (p: P) => (
   <svg {...base(p)}>
-    <path d="M14.5 3.5a8 8 0 1 0 6 12.5 7 7 0 0 1-6-12.5z" />
-    <path d="M18 4v3M16.5 5.5h3" />
-    <path d="M20.5 9.5v2M19.5 10.5h2" strokeWidth={1.25} />
+    <path d="M13.5 3a8.5 8.5 0 1 0 7.5 12.5A7.5 7.5 0 0 1 13.5 3z" />
+    <path d="M18.5 4v4M16.5 6h4" />
   </svg>
 );
 
 /** Cloud with z's for a nap. */
 export const NapIcon = (p: P) => (
   <svg {...base(p)}>
-    <path d="M7 18.5h9.5a3.5 3.5 0 0 0 .5-7 5 5 0 0 0-9.6-1.3A4.2 4.2 0 0 0 7 18.5z" />
-    <path d="M13.5 5.5h2.5l-2.5 3h2.5" strokeWidth={1.5} />
-    <path d="M18.5 2.5h2l-2 2.5h2" strokeWidth={1.25} />
+    <path d="M6.5 19h10a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.6-1.4A4.7 4.7 0 0 0 6.5 19z" />
+    <path d="M14.5 3.5h4l-4 4.5h4" />
   </svg>
 );
 
@@ -113,6 +111,36 @@ export const PlusIcon = (p: P) => (
   </svg>
 );
 
+/** Folded diaper. */
+export const DiaperIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3.5 7h17v4.5A8.5 8.5 0 0 1 12 20a8.5 8.5 0 0 1-8.5-8.5z" />
+    <path d="M3.5 11.5c3 0 5.5 2 6.5 5M20.5 11.5c-3 0-5.5 2-6.5 5" />
+    <path d="M7 7V5.5M17 7V5.5" />
+  </svg>
+);
+
+export const GearIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+    <circle cx="9" cy="7" r="2" fill="var(--color-card)" />
+    <circle cx="15" cy="12" r="2" fill="var(--color-card)" />
+    <circle cx="8" cy="17" r="2" fill="var(--color-card)" />
+  </svg>
+);
+
+export const DownloadIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15" />
+  </svg>
+);
+
+export const UploadIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 19.5h15" />
+  </svg>
+);
+
 export const ICON = {
   bottle: BottleIcon,
   breast: BreastIcon,
@@ -120,4 +148,5 @@ export const ICON = {
   nap: NapIcon,
   awake: SunIcon,
   wake: BellIcon,
+  diaper: DiaperIcon,
 } as const;
