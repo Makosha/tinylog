@@ -7,13 +7,17 @@ import { useNow } from "@/components/useNow";
 import { PlusIcon } from "@/components/icons";
 import { MEASURE_META, assess, type Measure, type Measurement } from "@/domain/growth";
 import { ageLabel } from "@/domain/time";
-import { actions, useStore } from "@/store/store";
+import { actions, useStore, useUnits } from "@/store/store";
+import { formatLength, formatWeight, lengthScale, weightScale } from "@/domain/units";
 import { undoToast } from "@/store/toast";
 
 const MEASURES: Measure[] = ["weight", "length", "head"];
 
 export function Growth() {
   const { measurements, prefs } = useStore();
+  const units = useUnits();
+  const fmt = (k: Measure, v: number) => (k === "weight" ? formatWeight(v, units) : formatLength(v, units));
+  const scale = (k: Measure) => (k === "weight" ? weightScale(units) : lengthScale(units));
   const now = useNow(60_000);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
@@ -98,9 +102,8 @@ export function Growth() {
                   className={`rounded-2xl border p-3 text-left ${on ? "border-primary bg-primary/10" : "border-border bg-card"}`}
                 >
                   <p className="text-xs text-muted-foreground">{meta.label}</p>
-                  <p className="font-display text-lg font-bold leading-tight text-foreground">
-                    {last ? `${(last[meta.key] as number).toFixed(meta.decimals)}` : "—"}
-                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">{meta.unit}</span>
+                  <p className="truncate font-display text-lg font-bold leading-tight text-foreground">
+                    {last ? fmt(k, last[meta.key] as number) : "—"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">{a ? `${ordinal(a.percentile)} pct` : "no data"}</p>
                 </button>
@@ -109,7 +112,7 @@ export function Growth() {
           </div>
 
           <section className="card-soft mb-6 p-3">
-            <GrowthChart measure={measure} sex={prefs.babySex!} dobMs={dobForCharts} measurements={measurements} now={now} />
+            <GrowthChart measure={measure} sex={prefs.babySex!} dobMs={dobForCharts} measurements={measurements} now={now} scale={scale(measure)} />
             <p className="mt-1 text-center text-xs text-muted-foreground">
               WHO {prefs.babySex === "boy" ? "boys" : "girls"}
               {useCorrected ? " · corrected age" : ""} · dashed lines are the 3rd, 15th, 85th and 97th percentiles
@@ -126,7 +129,7 @@ export function Growth() {
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-foreground">
                         {MEASURES.filter((k) => typeof m[MEASURE_META[k].key] === "number")
-                          .map((k) => `${(m[MEASURE_META[k].key] as number).toFixed(MEASURE_META[k].decimals)} ${MEASURE_META[k].unit}`)
+                          .map((k) => fmt(k, m[MEASURE_META[k].key] as number))
                           .join(" · ") || "empty"}
                       </p>
                       <p className="text-sm text-muted-foreground">{ageLabel(prefs.babyDob!, m.at)}{preterm ? ` · corrected ${ageLabel(prefs.babyDue!, m.at)}` : ""}</p>

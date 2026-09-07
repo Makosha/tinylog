@@ -1,29 +1,32 @@
+import { volumeScale } from "@/domain/units";
+import { useUnits } from "@/store/store";
 import { Chip } from "./Chip";
 import { Stepper } from "./Stepper";
 
-export const ML_PRESETS = [60, 90, 120, 150, 180];
-
+/** Bottle amount. Stored in ml, shown in the preferred unit. */
 export function MlChips({ value, onChange }: { value: number | undefined; onChange: (ml: number | undefined) => void }) {
+  const v = volumeScale(useUnits());
+  const same = (a: number, b: number) => Math.abs(a - b) < 0.5;
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-5 gap-2">
-        {ML_PRESETS.map((ml) => (
-          <Chip key={ml} active={value === ml} onClick={() => onChange(value === ml ? undefined : ml)}>
-            {ml}
+        {v.presets.map((ml) => (
+          <Chip key={ml} active={value !== undefined && same(value, ml)} onClick={() => onChange(value !== undefined && same(value, ml) ? undefined : Math.round(ml))}>
+            {v.to(ml).toFixed(v.decimals)}
           </Chip>
         ))}
       </div>
       <Stepper
-        value={value !== undefined ? `${value}` : "–"}
-        unit="ml"
-        minusLabel="10 ml less"
-        plusLabel="10 ml more"
+        value={value !== undefined ? v.to(value).toFixed(v.decimals) : "–"}
+        unit={v.unit}
+        minusLabel="a bit less"
+        plusLabel="a bit more"
         onStep={(d) => {
           if (value === undefined) {
-            if (d > 0) onChange(90);
+            if (d > 0) onChange(Math.round(v.start));
             return;
           }
-          onChange(Math.max(0, value + d * 10) || undefined);
+          onChange(Math.max(0, Math.round(value + d * v.step)) || undefined);
         }}
       />
     </div>

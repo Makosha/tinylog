@@ -5,12 +5,15 @@ import { Chip } from "./Chip";
 import { DiaperChips } from "./DiaperChips";
 import { Field } from "./Field";
 import { Stepper } from "./Stepper";
+import { tempScale } from "@/domain/units";
+import { useUnits } from "@/store/store";
 
 const TUMMY = [1, 2, 5, 10, 15];
 const input = "h-12 w-full rounded-2xl border border-border bg-secondary/60 px-3 text-base text-foreground outline-none focus:border-primary";
 
 /** Kind-specific fields for "other" events. Used by the capture panel and the edit sheet. */
 export function OtherFields({ event, onPatch }: { event: OtherEvent; onPatch: (p: EventPatch) => void }) {
+  const t = tempScale(useUnits());
   switch (event.kind) {
     case "diaper":
       return (
@@ -22,11 +25,11 @@ export function OtherFields({ event, onPatch }: { event: OtherEvent; onPatch: (p
       return (
         <Field label={event.celsius >= FEVER_C ? "Temperature · fever" : "Temperature"}>
           <Stepper
-            value={event.celsius.toFixed(1)}
-            unit="°C"
+            value={t.to(event.celsius).toFixed(t.decimals)}
+            unit={t.unit}
             minusLabel="0.1 degree less"
             plusLabel="0.1 degree more"
-            onStep={(d) => onPatch({ celsius: Math.round((event.celsius + d * 0.1) * 10) / 10 })}
+            onStep={(d) => onPatch({ celsius: Math.round(t.from(Math.round((t.to(event.celsius) + d * 0.1) * 10) / 10) * 100) / 100 })}
           />
         </Field>
       );

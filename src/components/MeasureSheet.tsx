@@ -5,6 +5,8 @@ import { Field } from "./Field";
 import { CloseIcon, TrashIcon } from "./icons";
 import { Sheet } from "./Sheet";
 import { Stepper } from "./Stepper";
+import { formatWeight, lengthScale, weightScale, type Units } from "@/domain/units";
+import { useUnits } from "@/store/store";
 
 const DAY = 86_400_000;
 const MEASURES: Measure[] = ["weight", "length", "head"];
@@ -24,6 +26,7 @@ export function MeasureSheet({
   onClose: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const units = useUnits();
   const at = measurement.at;
   const dayShift = (n: number) => onPatch({ at: Math.min(now, at + n * DAY) });
   const btn = "h-12 w-12 rounded-2xl border border-border bg-secondary/60 text-sm font-bold text-foreground disabled:opacity-45";
@@ -69,14 +72,15 @@ export function MeasureSheet({
       </Field>
       {MEASURES.map((k) => {
         const meta = MEASURE_META[k];
+        const sc = scaleFor(k, units);
         const v = measurement[meta.key] as number | undefined;
         return (
-          <Field key={k} label={`${meta.label} · ${meta.unit}`}>
+          <Field key={k} label={`${meta.label} · ${sc.unit}`}>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <Stepper
-                  value={v !== undefined ? v.toFixed(meta.decimals) : "–"}
-                  unit={meta.unit}
+                  value={v === undefined ? "–" : k === "weight" && units.weight === "lb" ? formatWeight(v, units) : sc.to(v).toFixed(sc.decimals)}
+                  unit={k === "weight" && units.weight === "lb" ? "" : sc.unit}
                   minusLabel={`${meta.label} less`}
                   plusLabel={`${meta.label} more`}
                   onStep={(d) => {
@@ -84,7 +88,7 @@ export function MeasureSheet({
                       if (d > 0) onPatch({ [meta.key]: defaultFor(k) });
                       return;
                     }
-                    onPatch({ [meta.key]: round(Math.max(0, v + d * meta.step), meta.decimals) || undefined });
+                    onPatch({ [meta.key]: round(Math.max(0, v + d * sc.step), 4) || undefined });
                   }}
                 />
               </div>
@@ -106,4 +110,5 @@ export function MeasureSheet({
 }
 
 const defaultFor = (k: Measure) => ({ weight: 3.5, length: 50, head: 35 })[k];
+const scaleFor = (k: Measure, u: Units) => (k === "weight" ? weightScale(u) : lengthScale(u));
 const round = (v: number, d: number) => Number(v.toFixed(d));

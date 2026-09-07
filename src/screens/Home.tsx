@@ -4,7 +4,8 @@ import { deriveState, isStale } from "@/domain/state";
 import { eventsInWindow, groupNights, windowStats } from "@/domain/stats";
 import { suggestNext } from "@/domain/suggest";
 import { ageLabel, durationLabel } from "@/domain/time";
-import { actions, useStore } from "@/store/store";
+import { actions, useStore, useUnits } from "@/store/store";
+import { formatVolume } from "@/domain/units";
 import { resolveTheme } from "@/store/theme";
 import { showToast, undoToast } from "@/store/toast";
 import { navigate } from "@/store/route";
@@ -30,6 +31,7 @@ const buzz = () => navigator.vibrate?.(20);
 
 export function Home() {
   const { events, measurements, prefs, storageOk } = useStore();
+  const units = useUnits();
   const now = useNow();
   const [capture, setCapture] = useState<Capture | null>(null);
   const [stayedAsleep, setStayedAsleep] = useState(false);
@@ -196,7 +198,7 @@ export function Home() {
         <StatTile
           label="Feeds · 24h"
           value={`${stats.feeds}`}
-          sub={[stats.ml ? `${stats.ml}ml` : null, stats.breastMins ? `${stats.breastMins}m breast` : null].filter(Boolean).join(" · ") || "none yet"}
+          sub={[stats.ml ? formatVolume(stats.ml, units) : null, stats.breastMins ? `${stats.breastMins}m breast` : null].filter(Boolean).join(" · ") || "none yet"}
         />
         <StatTile
           label="Sleep · 24h"

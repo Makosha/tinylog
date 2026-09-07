@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formatLog } from "./textlog";
+import { US } from "./units";
 import type { LogEvent } from "./events";
 
 const at = (d: number, h: number, mi = 0) => new Date(2026, 8, d, h, mi).getTime();
@@ -21,12 +22,13 @@ describe("formatLog", () => {
     expect(text.split("\n")[0]).toContain("girl");
     expect(text).toContain("Last 2 days");
     expect(text).toContain("weight 4.10 kg, length 53.0 cm");
+    expect(formatLog(events, [{ id: "m", at: at(6, 9), weightKg: 4.1 }], {}, 1, now, US)).toContain("weight 9 lb 1 oz");
   });
   it("has one section per day with totals and chronological entries", () => {
     const sections = text.split("\n## ");
     expect(sections).toHaveLength(3);
     const today = sections[2]!;
-    expect(today).toContain("2 feeds (120 ml bottle) (15 min breast)");
+    expect(today).toContain("2 feeds (120ml bottle) (15 min breast)");
     expect(today).toContain("1 diaper (1 wet, 1 dirty)");
     expect(today.indexOf("Breast")).toBeLessThan(today.indexOf("Bottle"));
     expect(today).toContain("09:00 Nap until 10:30 (1h 30m)");

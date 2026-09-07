@@ -26,12 +26,15 @@ export function GrowthChart({
   dobMs,
   measurements,
   now,
+  scale,
 }: {
   measure: Measure;
   sex: Sex;
   dobMs: number;
   measurements: Measurement[];
   now: number;
+  /** display unit conversion */
+  scale: { unit: string; to: (v: number) => number; decimals: number };
 }) {
   const meta = MEASURE_META[measure];
   const [active, setActive] = useState<string | null>(null);
@@ -40,15 +43,15 @@ export function GrowthChart({
     () =>
       measurements
         .filter((m) => typeof m[meta.key] === "number" && m.at >= dobMs)
-        .map((m) => ({ id: m.id, days: ageDays(dobMs, m.at), value: m[meta.key] as number, at: m.at, a: assess(measure, sex, dobMs, m) }))
+        .map((m) => ({ id: m.id, days: ageDays(dobMs, m.at), value: scale.to(m[meta.key] as number), at: m.at, a: assess(measure, sex, dobMs, m) }))
         .sort((a, b) => a.days - b.days),
-    [measurements, dobMs, measure, sex, meta.key],
+    [measurements, dobMs, measure, sex, meta.key, scale],
   );
 
   const maxDays = Math.max(8 * 7, ageDays(dobMs, now) + 28, ...points.map((p) => p.days + 14));
   const curves = useMemo(
-    () => CHART_PERCENTILES.map((p) => ({ p, pts: percentileCurve(measure, sex, p, maxDays) })),
-    [measure, sex, maxDays],
+    () => CHART_PERCENTILES.map((p) => ({ p, pts: percentileCurve(measure, sex, p, maxDays).map((q) => ({ days: q.days, value: scale.to(q.value) })) })),
+    [measure, sex, maxDays, scale],
   );
   const lo = curves[0]!.pts;
   const hi = curves[curves.length - 1]!.pts;
@@ -107,7 +110,7 @@ export function GrowthChart({
       {activePt ? (
         <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-xl bg-card px-3 py-1.5 text-xs shadow-lg ring-1 ring-border">
           <span className="font-bold text-foreground">
-            {activePt.value.toFixed(meta.decimals)} {meta.unit}
+            {activePt.value.toFixed(scale.decimals)} {scale.unit}
           </span>
           <span className="text-muted-foreground">
             {" "}

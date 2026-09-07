@@ -3,6 +3,7 @@ import type { BabyState } from "@/domain/state";
 import type { WindowStats } from "@/domain/stats";
 import { durationLabel, formatTime } from "@/domain/time";
 import { ICON } from "./icons";
+import { useUnits } from "@/store/store";
 
 const LOOK = {
   awake: { Icon: ICON.awake, cls: "text-wake border-wake/30 bg-wake/10" },
@@ -34,9 +35,10 @@ export function StateCard({
   onEditLast: (e: LogEvent) => void;
 }) {
   const { Icon, cls } = LOOK[state.name];
+  const units = useUnits();
   const lf = stats.lastFeed;
   const feedLine = lf
-    ? `${LABEL[lf.source].toLowerCase()} ${durationLabel(lf.at, now)} ago${eventDetail(lf) ? ` · ${eventDetail(lf)}` : ""}`
+    ? `${LABEL[lf.source].toLowerCase()} ${durationLabel(lf.at, now)} ago${eventDetail(lf, units) ? ` · ${eventDetail(lf, units)}` : ""}`
     : "no feeds yet";
   const sub = state.name === "awake" ? feedLine : lf ? `since ${formatTime(state.since)} · ${feedLine}` : `since ${formatTime(state.since)}`;
 
@@ -77,7 +79,7 @@ export function StateCard({
         >
           <span className="truncate text-muted-foreground">
             Last: <span className="font-semibold text-foreground">{eventLabel(lastEvent)}</span> {formatTime(lastEvent.at)}
-            {eventDetail(lastEvent) ? ` · ${eventDetail(lastEvent)}` : ""}
+            {eventDetail(lastEvent, units) ? ` · ${eventDetail(lastEvent, units)}` : ""}
           </span>
           <span className="font-bold text-primary">Edit</span>
         </button>

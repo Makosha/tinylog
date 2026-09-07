@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { migrateV1, newId, parseEvents, type FeedSource, type LogEvent, type OtherKind, type RestKind } from "@/domain/events";
 import * as S from "@/domain/state";
 import { parseMeasurements, sortMeasurements, type Measurement, type Sex } from "@/domain/growth";
+import { unitsForLocale, type Units } from "@/domain/units";
 
 const KEY = "tinylog.events.v2";
 const V1_KEY = "tinylog.events.v1";
@@ -22,6 +23,7 @@ export interface Prefs {
   babyDue?: number;
   /** "still asleep?" prompt snoozed until this time */
   staleSnoozedUntil?: number;
+  units?: Units;
 }
 
 interface Snapshot {
@@ -69,6 +71,7 @@ function hydrate() {
     }
     const p = localStorage.getItem(PREFS_KEY);
     if (p) prefs = { ...prefs, ...(JSON.parse(p) as Partial<Prefs>) };
+    if (!prefs.units) prefs = { ...prefs, units: unitsForLocale(navigator.language ?? "") };
     const g = localStorage.getItem(GROWTH_KEY);
     if (g) measurements = parseMeasurements(JSON.parse(g)) ?? [];
   } catch {
@@ -191,3 +194,8 @@ export const actions = {
     );
   },
 };
+
+/** Unit preferences, metric until hydrated. */
+export function useUnits(): Units {
+  return useStore().prefs.units ?? { temp: "c", weight: "kg", length: "cm", volume: "ml" };
+}

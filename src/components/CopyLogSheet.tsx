@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatLog } from "@/domain/textlog";
-import { useStore } from "@/store/store";
+import { useStore, useUnits } from "@/store/store";
 import { showToast } from "@/store/toast";
 import { Chip } from "./Chip";
 import { Field } from "./Field";
@@ -29,10 +29,11 @@ async function copyText(text: string) {
 /** Pick a range, preview the plain-text log, copy it for a chat assistant. */
 export function CopyLogSheet({ now, onClose }: { now: number; onClose: () => void }) {
   const { events, measurements, prefs } = useStore();
+  const units = useUnits();
   const [days, setDays] = useState(7);
   const text = useMemo(
-    () => formatLog(events, measurements, { name: prefs.babyName, dobMs: prefs.babyDob, dueMs: prefs.babyDue, sex: prefs.babySex }, days, now),
-    [events, measurements, prefs, days, now],
+    () => formatLog(events, measurements, { name: prefs.babyName, dobMs: prefs.babyDob, dueMs: prefs.babyDue, sex: prefs.babySex }, days, now, units),
+    [events, measurements, prefs, days, now, units],
   );
 
   return (

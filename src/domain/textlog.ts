@@ -2,6 +2,7 @@ import { eventDetail, eventLabel, isRest, type LogEvent } from "./events";
 import { MEASURE_META, type Measurement } from "./growth";
 import { daySeries, eventsInRange } from "./stats";
 import { ageLabel, durationLabel } from "./time";
+import { METRIC, formatLength, formatVolume, formatWeight, type Units } from "./units";
 
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
@@ -21,7 +22,7 @@ const dateLabel = (ms: number) => new Date(ms).toLocaleDateString([], { weekday:
  * assistant: a header about the baby, then each day's totals and events in
  * chronological order.
  */
-export function formatLog(events: LogEvent[], measurements: Measurement[], baby: BabyInfo, days: number, now: number): string {
+export function formatLog(events: LogEvent[], measurements: Measurement[], baby: BabyInfo, days: number, now: number, units: Units = METRIC): string {
   const lines: string[] = [];
   const who = baby.name ? `${baby.name}` : "Baby";
   const bits = [
@@ -36,7 +37,7 @@ export function formatLog(events: LogEvent[], measurements: Measurement[], baby:
   if (latest) {
     const parts = (["weight", "length", "head"] as const)
       .filter((k) => typeof latest[MEASURE_META[k].key] === "number")
-      .map((k) => `${MEASURE_META[k].label.toLowerCase()} ${(latest[MEASURE_META[k].key] as number).toFixed(MEASURE_META[k].decimals)} ${MEASURE_META[k].unit}`);
+      .map((k) => `${MEASURE_META[k].label.toLowerCase()} ${k === "weight" ? formatWeight(latest.weightKg!, units) : formatLength(latest[MEASURE_META[k].key] as number, units)}`);
     if (parts.length) lines.push(`Latest measurement (${dateLabel(latest.at)}): ${parts.join(", ")}.`);
   }
 
@@ -45,7 +46,7 @@ export function formatLog(events: LogEvent[], measurements: Measurement[], baby:
     lines.push("");
     lines.push(`## ${dateLabel(day)}`);
     const totals = [
-      `${stats.feeds} feed${stats.feeds === 1 ? "" : "s"}${stats.ml ? ` (${stats.ml} ml bottle)` : ""}${stats.breastMins ? ` (${stats.breastMins} min breast)` : ""}`,
+      `${stats.feeds} feed${stats.feeds === 1 ? "" : "s"}${stats.ml ? ` (${formatVolume(stats.ml, units)} bottle)` : ""}${stats.breastMins ? ` (${stats.breastMins} min breast)` : ""}`,
       `sleep ${durationLabel(0, (stats.nightMins + stats.napMins) * MIN)} (night ${durationLabel(0, stats.nightMins * MIN)}, naps ${durationLabel(0, stats.napMins * MIN)})`,
       `${stats.diapers} diaper${stats.diapers === 1 ? "" : "s"}${stats.diapers ? ` (${stats.wet} wet, ${stats.dirty} dirty)` : ""}`,
     ];
@@ -61,7 +62,7 @@ export function formatLog(events: LogEvent[], measurements: Measurement[], baby:
         const start = hm(e.at) + (e.at < day ? " previous day" : "");
         lines.push(`- ${start} ${eventLabel(e)} until ${end} (${durationLabel(e.at, e.endAt ?? now)})`);
       } else {
-        const d = eventDetail(e);
+        const d = eventDetail(e, units);
         lines.push(`- ${hm(e.at)} ${eventLabel(e)}${d ? ` · ${d}` : ""}`);
       }
     }

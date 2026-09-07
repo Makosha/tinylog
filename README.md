@@ -64,8 +64,8 @@ expanded tables; regenerate with `python3 scripts/who-lms.py <dir>` after
 downloading the six xlsx files from who.int.
 
 Settings hold the baby's name, birth date, sex, and for a preterm baby the
-due date, which adds a corrected-age switch to the growth charts. A JSON
-backup can be exported. Theme follows the system by default; the sun/moon
+due date, which adds a corrected-age switch to the growth charts. Units (°C/°F, kg/lb·oz, cm/in, ml/fl oz) default from the phone's locale
+and can be switched; storage stays metric. A JSON backup can be exported. Theme follows the system by default; the sun/moon
 button overrides it.
 
 Code layout: `src/domain` is pure TypeScript (state machine, stats, growth

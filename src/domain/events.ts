@@ -1,3 +1,5 @@
+import { METRIC, formatTemp, formatVolume, type Units } from "./units";
+
 export type FeedSource = "breast" | "bottle";
 export type BreastSide = "left" | "right" | "both";
 
@@ -121,19 +123,19 @@ export const LABEL = {
 export const eventLabel = (e: LogEvent) => LABEL[e.kind === "feed" ? e.source : e.kind];
 
 /** Short detail text: "left · 15m", "120ml", "wet · dirty". */
-export function eventDetail(e: LogEvent): string {
+export function eventDetail(e: LogEvent, units: Units = METRIC): string {
   if (e.kind === "feed") {
     return e.source === "breast"
       ? [e.side, e.minutes ? `${e.minutes}m` : null].filter(Boolean).join(" · ")
       : e.ml
-        ? `${e.ml}ml`
+        ? formatVolume(e.ml, units)
         : "";
   }
   switch (e.kind) {
     case "diaper":
       return [e.wet ? "wet" : null, e.dirty ? "dirty" : null].filter(Boolean).join(" · ");
     case "temperature":
-      return `${e.celsius.toFixed(1)}°C${e.celsius >= FEVER_C ? " · fever" : ""}`;
+      return `${formatTemp(e.celsius, units)}${e.celsius >= FEVER_C ? " · fever" : ""}`;
     case "medicine":
       return [e.name, e.dose].filter(Boolean).join(" · ");
     case "tummy":

@@ -8,7 +8,8 @@ import { Timeline } from "@/components/Timeline";
 import { TrendBars } from "@/components/TrendBars";
 import { daySeries, eventsInRange, groupNights, rangeStats } from "@/domain/stats";
 import { durationLabel, isSameDay, startOfDay } from "@/domain/time";
-import { useStore } from "@/store/store";
+import { useStore, useUnits } from "@/store/store";
+import { formatVolume } from "@/domain/units";
 
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
@@ -21,6 +22,7 @@ function dayLabel(day: number, now: number) {
 
 export function History() {
   const { events } = useStore();
+  const units = useUnits();
   const now = useNow();
   const [day, setDay] = useState(() => startOfDay(Date.now()));
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function History() {
         <StatTile
           label="Feeds"
           value={`${stats.feeds}`}
-          sub={[stats.ml ? `${stats.ml}ml` : null, stats.breastMins ? `${stats.breastMins}m breast` : null].filter(Boolean).join(" · ") || "none"}
+          sub={[stats.ml ? formatVolume(stats.ml, units) : null, stats.breastMins ? `${stats.breastMins}m breast` : null].filter(Boolean).join(" · ") || "none"}
         />
         <StatTile
           label="Sleep"

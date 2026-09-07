@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { actions, useStore } from "@/store/store";
+import { actions, useStore, useUnits } from "@/store/store";
+import type { Units } from "@/domain/units";
 import { Chip } from "./Chip";
 import { Field } from "./Field";
 import { CloseIcon, DownloadIcon } from "./icons";
@@ -16,6 +17,8 @@ function download(name: string, text: string) {
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { prefs } = useStore();
+  const units = useUnits();
+  const setUnit = <K extends keyof Units>(k: K, v: Units[K]) => actions.setPrefs({ units: { ...units, [k]: v } });
   const [name, setName] = useState(prefs.babyName ?? "");
   const dob = prefs.babyDob ? toDateInput(prefs.babyDob) : "";
   const due = prefs.babyDue ? toDateInput(prefs.babyDue) : "";
@@ -72,6 +75,14 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </Chip>
         </div>
       </Field>
+      <Field label="Units">
+        <div className="grid grid-cols-2 gap-2">
+          <UnitRow label="Temperature" value={units.temp} options={[["c", "°C"], ["f", "°F"]]} onChange={(v) => setUnit("temp", v)} />
+          <UnitRow label="Weight" value={units.weight} options={[["kg", "kg"], ["lb", "lb · oz"]]} onChange={(v) => setUnit("weight", v)} />
+          <UnitRow label="Length" value={units.length} options={[["cm", "cm"], ["in", "in"]]} onChange={(v) => setUnit("length", v)} />
+          <UnitRow label="Bottle" value={units.volume} options={[["ml", "ml"], ["oz", "fl oz"]]} onChange={(v) => setUnit("volume", v)} />
+        </div>
+      </Field>
       <Field label="Your data">
         <p className="mb-2 text-sm text-muted-foreground">
           Everything lives only on this phone. Clearing the browser's site data, or losing the phone, loses the log. Export a backup now and then.
@@ -91,4 +102,25 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 function toDateInput(ms: number) {
   const d = new Date(ms);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function UnitRow<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {
+  return (
+    <div>
+      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
+      <div className="flex rounded-2xl border border-border bg-secondary/60 p-1">
+        {options.map(([v, text]) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={value === v}
+            onClick={() => onChange(v)}
+            className={`h-9 flex-1 rounded-xl text-sm font-bold ${value === v ? "bg-primary text-primary-foreground" : "text-foreground"}`}
+          >
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
