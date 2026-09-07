@@ -8,14 +8,13 @@ import { PlusIcon } from "@/components/icons";
 import { MEASURE_META, assess, type Measure, type Measurement } from "@/domain/growth";
 import { ageLabel } from "@/domain/time";
 import { actions, useStore } from "@/store/store";
-import { showToast, undoToast } from "@/store/toast";
+import { undoToast } from "@/store/toast";
 
 const MEASURES: Measure[] = ["weight", "length", "head"];
 
 export function Growth() {
   const { measurements, prefs } = useStore();
   const now = useNow(60_000);
-  const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
   const [measure, setMeasure] = useState<Measure>("weight");
@@ -27,7 +26,6 @@ export function Growth() {
   const useCorrected = preterm && corrected;
   const dobForCharts = useCorrected ? prefs.babyDue! : prefs.babyDob!;
   const hiddenBeforeDue = useCorrected ? measurements.filter((m) => m.at < prefs.babyDue!).length : 0;
-  const latest = measurements[0];
   const editing = editingId ? measurements.find((m) => m.id === editingId) : undefined;
 
   return (
@@ -42,7 +40,20 @@ export function Growth() {
           </p>
         </div>
         {ready ? (
-          <button type="button" onClick={() => setAdding(true)} className="surface-warm flex h-11 items-center gap-1.5 rounded-full pl-3 pr-4 text-sm font-bold active:scale-95">
+          <button
+            type="button"
+            onClick={() => {
+              const last = measurements[0];
+              const created = actions.addMeasurement({
+                at: now,
+                ...(last?.weightKg ? { weightKg: last.weightKg } : {}),
+                ...(last?.lengthCm ? { lengthCm: last.lengthCm } : {}),
+                ...(last?.headCm ? { headCm: last.headCm } : {}),
+              });
+              setEditingId(created.id);
+            }}
+            className="surface-warm flex h-11 items-center gap-1.5 rounded-full pl-3 pr-4 text-sm font-bold active:scale-95"
+          >
             <PlusIcon className="size-5" /> Add
           </button>
         ) : null}
@@ -133,23 +144,11 @@ export function Growth() {
         </>
       )}
 
-      {adding ? (
-        <MeasureSheet
-          previous={latest}
-          now={now}
-          onSave={(m) => {
-            actions.addMeasurement(m);
-            showToast({ message: "Measurement saved" });
-          }}
-          onClose={() => setAdding(false)}
-        />
-      ) : null}
       {editing ? (
         <MeasureSheet
-          initial={editing}
-          previous={measurements.find((m) => m.at < editing.at)}
+          measurement={editing}
           now={now}
-          onSave={(m) => actions.updateMeasurement(editing.id, { ...m, weightKg: m.weightKg, lengthCm: m.lengthCm, headCm: m.headCm })}
+          onPatch={(p) => actions.updateMeasurement(editing.id, p)}
           onDelete={() => {
             const removed = actions.deleteMeasurement(editing.id);
             setEditingId(null);

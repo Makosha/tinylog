@@ -169,7 +169,7 @@ export const actions = {
     setMeasurements(
       snap.measurements.map((m) => {
         if (m.id !== id) return m;
-        const next = { ...m, ...patch };
+        const next: Measurement = { ...m, ...patch };
         for (const k of ["weightKg", "lengthCm", "headCm"] as const) if (next[k] === undefined || next[k]! <= 0) delete next[k];
         return next;
       }),
