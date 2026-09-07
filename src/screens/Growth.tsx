@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GrowthChart, ordinal } from "@/components/GrowthChart";
+import { Switch } from "@/components/Switch";
 import { MeasureSheet } from "@/components/MeasureSheet";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { useNow } from "@/components/useNow";
@@ -20,6 +21,12 @@ export function Growth() {
   const [measure, setMeasure] = useState<Measure>("weight");
 
   const ready = prefs.babyDob !== undefined && prefs.babySex !== undefined;
+  // born more than a week before the due date: offer corrected age
+  const preterm = prefs.babyDob !== undefined && prefs.babyDue !== undefined && prefs.babyDue - prefs.babyDob > 7 * 86_400_000;
+  const [corrected, setCorrected] = useState(true);
+  const useCorrected = preterm && corrected;
+  const dobForCharts = useCorrected ? prefs.babyDue! : prefs.babyDob!;
+  const hiddenBeforeDue = useCorrected ? measurements.filter((m) => m.at < prefs.babyDue!).length : 0;
   const latest = measurements[0];
   const editing = editingId ? measurements.find((m) => m.id === editingId) : undefined;
 
@@ -29,7 +36,9 @@ export function Growth() {
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Growth</h1>
           <p className="text-sm text-muted-foreground">
-            {prefs.babyDob ? `${prefs.babyName ? `${prefs.babyName} · ` : ""}${ageLabel(prefs.babyDob, now)}` : "WHO growth standards"}
+            {prefs.babyDob
+              ? `${prefs.babyName ? `${prefs.babyName} · ` : ""}${ageLabel(prefs.babyDob, now)}${preterm ? ` · corrected ${ageLabel(prefs.babyDue!, now)}` : ""}`
+              : "WHO growth standards"}
           </p>
         </div>
         {ready ? (
@@ -51,11 +60,22 @@ export function Growth() {
         </section>
       ) : (
         <>
+          {preterm ? (
+            <div className={`mb-4 flex h-14 items-center justify-between rounded-2xl border px-3 ${corrected ? "border-primary/40 bg-primary/10" : "border-border bg-card"}`}>
+              <div>
+                <p className="text-sm font-bold text-foreground">Corrected age</p>
+                <p className="text-xs text-muted-foreground">
+                  {corrected ? "curves counted from the due date, as for preterm babies" : "curves counted from the birth date"}
+                </p>
+              </div>
+              <Switch checked={corrected} label="Use corrected age" onChange={setCorrected} />
+            </div>
+          ) : null}
           <div className="mb-4 grid grid-cols-3 gap-2" role="tablist" aria-label="Measure">
             {MEASURES.map((k) => {
               const meta = MEASURE_META[k];
               const last = measurements.find((m) => typeof m[meta.key] === "number");
-              const a = last ? assess(k, prefs.babySex!, prefs.babyDob!, last) : null;
+              const a = last ? assess(k, prefs.babySex!, dobForCharts, last) : null;
               const on = measure === k;
               return (
                 <button
@@ -78,8 +98,12 @@ export function Growth() {
           </div>
 
           <section className="card-soft mb-6 p-3">
-            <GrowthChart measure={measure} sex={prefs.babySex!} dobMs={prefs.babyDob!} measurements={measurements} now={now} />
-            <p className="mt-1 text-center text-xs text-muted-foreground">WHO {prefs.babySex === "boy" ? "boys" : "girls"} · dashed lines are the 3rd, 15th, 85th and 97th percentiles</p>
+            <GrowthChart measure={measure} sex={prefs.babySex!} dobMs={dobForCharts} measurements={measurements} now={now} />
+            <p className="mt-1 text-center text-xs text-muted-foreground">
+              WHO {prefs.babySex === "boy" ? "boys" : "girls"}
+              {useCorrected ? " · corrected age" : ""} · dashed lines are the 3rd, 15th, 85th and 97th percentiles
+              {hiddenBeforeDue ? ` · ${hiddenBeforeDue} before the due date not shown` : ""}
+            </p>
           </section>
 
           <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Measurements</h2>
@@ -94,7 +118,7 @@ export function Growth() {
                           .map((k) => `${(m[MEASURE_META[k].key] as number).toFixed(MEASURE_META[k].decimals)} ${MEASURE_META[k].unit}`)
                           .join(" · ") || "empty"}
                       </p>
-                      <p className="text-sm text-muted-foreground">{ageLabel(prefs.babyDob!, m.at)}</p>
+                      <p className="text-sm text-muted-foreground">{ageLabel(prefs.babyDob!, m.at)}{preterm ? ` · corrected ${ageLabel(prefs.babyDue!, m.at)}` : ""}</p>
                     </div>
                     <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
                       {new Date(m.at).toLocaleDateString([], { month: "short", day: "numeric" })}

@@ -39,7 +39,7 @@ export function GrowthChart({
   const points = useMemo(
     () =>
       measurements
-        .filter((m) => typeof m[meta.key] === "number")
+        .filter((m) => typeof m[meta.key] === "number" && m.at >= dobMs)
         .map((m) => ({ id: m.id, days: ageDays(dobMs, m.at), value: m[meta.key] as number, at: m.at, a: assess(measure, sex, dobMs, m) }))
         .sort((a, b) => a.days - b.days),
     [measurements, dobMs, measure, sex, meta.key],
@@ -121,6 +121,8 @@ export function GrowthChart({
 }
 
 export function ordinal(n: number) {
+  if (n < 1) return "<1st";
+  if (n > 99) return ">99th";
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;

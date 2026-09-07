@@ -53,8 +53,9 @@ percentile per measure. The WHO LMS tables are embedded from the official
 expanded tables; regenerate with `python3 scripts/who-lms.py <dir>` after
 downloading the six xlsx files from who.int.
 
-Settings hold the baby's name, birth date and sex, and export or import of
-the whole log as JSON. Theme follows the system by default; the sun/moon
+Settings hold the baby's name, birth date, sex, and for a preterm baby the
+due date, which adds a corrected-age switch to the growth charts. A JSON
+backup can be exported. Theme follows the system by default; the sun/moon
 button overrides it.
 
 Code layout: `src/domain` is pure TypeScript (state machine, stats, growth

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { migrateV1, newId, parseEvents, sortEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
+import { migrateV1, newId, parseEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
 import * as S from "@/domain/state";
 import { parseMeasurements, sortMeasurements, type Measurement, type Sex } from "@/domain/growth";
 
@@ -18,6 +18,8 @@ export interface Prefs {
   /** epoch ms of the birth day */
   babyDob?: number;
   babySex?: Sex;
+  /** expected birth date, epoch ms; set when the baby came early */
+  babyDue?: number;
   /** "still asleep?" prompt snoozed until this time */
   staleSnoozedUntil?: number;
 }
@@ -187,29 +189,5 @@ export const actions = {
       null,
       2,
     );
-  },
-  /** Replaces all events. Returns the number imported, or null if the file is not a TinyLog export. */
-  importJson(text: string): number | null {
-    try {
-      const raw = JSON.parse(text) as { events?: unknown; measurements?: unknown; prefs?: Partial<Prefs> };
-      const events = parseEvents(Array.isArray(raw) ? raw : raw.events);
-      if (!events) return null;
-      if (raw.prefs && typeof raw.prefs === "object") {
-        const { babyName, babyDob, babySex, lastMl, lastMinutes } = raw.prefs;
-        setPrefs({
-          ...(babyName ? { babyName } : {}),
-          ...(babyDob ? { babyDob } : {}),
-          ...(babySex ? { babySex } : {}),
-          ...(lastMl ? { lastMl } : {}),
-          ...(lastMinutes ? { lastMinutes } : {}),
-        });
-      }
-      const measurements = parseMeasurements(raw.measurements);
-      if (measurements) setMeasurements(measurements);
-      setEvents(sortEvents(events));
-      return events.length;
-    } catch {
-      return null;
-    }
   },
 };

@@ -135,12 +135,6 @@ export const DownloadIcon = (p: P) => (
   </svg>
 );
 
-export const UploadIcon = (p: P) => (
-  <svg {...base(p)}>
-    <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 19.5h15" />
-  </svg>
-);
-
 export const ListIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M8 6.5h12M8 12h12M8 17.5h12" />

@@ -62,7 +62,10 @@ export function stepSnapped(value: number, stepMins: number) {
 /** "day 6" from a birth date; day 1 is the birth day. */
 export function ageLabel(dobMs: number, nowMs: number) {
   const days = Math.floor((startOfDay(nowMs) - startOfDay(dobMs)) / (24 * HOUR)) + 1;
-  if (days < 1) return "";
+  if (days < 1) {
+    const until = 1 - days;
+    return until >= 14 ? `${Math.round(until / 7)} weeks early` : `${until} days early`;
+  }
   if (days <= 28) return `day ${days}`;
   const weeks = Math.floor((days - 1) / 7);
   if (weeks < 16) return `${weeks} weeks`;
