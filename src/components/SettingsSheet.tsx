@@ -5,6 +5,7 @@ import { Chip } from "./Chip";
 import { Field } from "./Field";
 import { CloseIcon, DownloadIcon } from "./icons";
 import { Sheet } from "./Sheet";
+import { DateField } from "./DatePicker";
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -20,8 +21,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const units = useUnits();
   const setUnit = <K extends keyof Units>(k: K, v: Units[K]) => actions.setPrefs({ units: { ...units, [k]: v } });
   const [name, setName] = useState(prefs.babyName ?? "");
-  const dob = prefs.babyDob ? toDateInput(prefs.babyDob) : "";
-  const due = prefs.babyDue ? toDateInput(prefs.babyDue) : "";
   const input = "h-12 w-full rounded-2xl border border-border bg-secondary/60 px-3 text-base text-foreground outline-none focus:border-primary";
 
   return (
@@ -48,21 +47,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         />
       </Field>
       <Field label="Born on">
-        <input
-          type="date"
-          value={dob}
-          max={toDateInput(Date.now())}
-          onChange={(e) => actions.setPrefs({ babyDob: e.target.value ? new Date(`${e.target.value}T12:00:00`).getTime() : undefined })}
-          className={input}
-        />
+        <DateField label="Birth date" value={prefs.babyDob} max={Date.now()} onChange={(ms) => actions.setPrefs({ babyDob: ms })} />
       </Field>
       <Field label="Was due on · only if born early">
-        <input
-          type="date"
-          value={due}
-          onChange={(e) => actions.setPrefs({ babyDue: e.target.value ? new Date(`${e.target.value}T12:00:00`).getTime() : undefined })}
-          className={input}
-        />
+        <DateField label="Due date" value={prefs.babyDue} min={prefs.babyDob} onChange={(ms) => actions.setPrefs({ babyDue: ms })} />
         <p className="mt-1.5 text-xs text-muted-foreground">For a preterm baby the growth charts can also be read by corrected age, counted from this date.</p>
       </Field>
       <Field label="Sex · for the WHO growth curves">
@@ -97,11 +85,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       </Field>
     </Sheet>
   );
-}
-
-function toDateInput(ms: number) {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function UnitRow<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {

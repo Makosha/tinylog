@@ -4,6 +4,7 @@ import { dayLabel } from "@/domain/time";
 import { Field } from "./Field";
 import { CloseIcon, TrashIcon } from "./icons";
 import { Sheet } from "./Sheet";
+import { CalendarSheet } from "./DatePicker";
 import { Stepper } from "./Stepper";
 import { formatWeight, lengthScale, weightScale, type Units } from "@/domain/units";
 import { useUnits } from "@/store/store";
@@ -26,6 +27,7 @@ export function MeasureSheet({
   onClose: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [calendar, setCalendar] = useState(false);
   const units = useUnits();
   const at = measurement.at;
   const dayShift = (n: number) => onPatch({ at: Math.min(now, at + n * DAY) });
@@ -58,10 +60,10 @@ export function MeasureSheet({
           <button type="button" aria-label="A day earlier" onClick={() => dayShift(-1)} className={btn}>
             −1d
           </button>
-          <div className="flex h-12 flex-1 flex-col items-center justify-center rounded-2xl border border-border bg-secondary/60">
+          <button type="button" onClick={() => setCalendar(true)} className="flex h-12 flex-1 flex-col items-center justify-center rounded-2xl border border-border bg-secondary/60 active:scale-[0.98]">
             <span className="font-display text-base font-bold leading-none text-foreground">{new Date(at).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
             <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{dayLabel(at, now)}</span>
-          </div>
+          </button>
           <button type="button" aria-label="A day later" disabled={at + DAY > now} onClick={() => dayShift(1)} className={btn}>
             +1d
           </button>
@@ -105,6 +107,18 @@ export function MeasureSheet({
           </Field>
         );
       })}
+      {calendar ? (
+        <CalendarSheet
+          label="Measured on"
+          value={at}
+          max={now}
+          onPick={(ms) => {
+            onPatch({ at: Math.min(now, ms) });
+            setCalendar(false);
+          }}
+          onClose={() => setCalendar(false)}
+        />
+      ) : null}
     </Sheet>
   );
 }
