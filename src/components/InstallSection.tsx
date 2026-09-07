@@ -48,9 +48,47 @@ export function InstallSection() {
       </div>
     );
   }
+  if (state.kind === "android-manual") {
+    return (
+      <div className={box}>
+        <p className="mb-2 text-muted-foreground">In this browser:</p>
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>
+            Open the <b>⋮</b> menu
+          </li>
+          <li>
+            Choose <b>Install</b> or <b>Add to Home screen</b>
+          </li>
+        </ol>
+        <p className="mt-2 text-xs text-muted-foreground">Chrome on Android installs it as a full app with one tap.</p>
+      </div>
+    );
+  }
+  if (state.kind === "mac-safari") {
+    return (
+      <div className={box}>
+        <p className="mb-2 text-muted-foreground">In Safari on a Mac:</p>
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>
+            Open the <b>File</b> menu
+          </li>
+          <li>
+            Choose <b>Add to Dock</b>
+          </li>
+        </ol>
+      </div>
+    );
+  }
+  if (state.kind === "unsupported") {
+    return (
+      <p className={`${box} text-muted-foreground`}>
+        Firefox can't install web apps on this device. Open this address in <b className="text-foreground">Chrome</b> or <b className="text-foreground">Edge</b> to install it, or keep using it here in a tab.
+      </p>
+    );
+  }
   return (
     <p className={`${box} text-muted-foreground`}>
-      In your browser's menu choose <b className="text-foreground">Install app</b> or <b className="text-foreground">Add to Home Screen</b>.
+      Look for <b className="text-foreground">Install app</b> in your browser's menu, or the install icon in the address bar.
     </p>
   );
 }

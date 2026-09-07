@@ -30,11 +30,18 @@ export const isIOS = () => /iPhone|iPad|iPod/.test(ua()) || (navigator.platform 
 /** Chrome, Firefox or Edge on iOS (all WebKit underneath). */
 export const isIOSOtherBrowser = () => isIOS() && /CriOS|FxiOS|EdgiOS/.test(ua());
 
+export const isAndroid = () => /Android/.test(ua());
+export const isMacSafari = () => /Macintosh/.test(ua()) && /Safari/.test(ua()) && !/Chrome|Chromium|Edg|Firefox/.test(ua());
+export const isFirefox = () => /Firefox/.test(ua());
+
 export type InstallState =
   | { kind: "installed" }
   | { kind: "prompt"; install: () => Promise<boolean> }
   | { kind: "ios-safari" }
   | { kind: "ios-other" }
+  | { kind: "android-manual" }
+  | { kind: "mac-safari" }
+  | { kind: "unsupported" }
   | { kind: "manual" };
 
 export function useInstall(): InstallState {
@@ -72,5 +79,8 @@ export function useInstall(): InstallState {
     };
   if (isIOSOtherBrowser()) return { kind: "ios-other" };
   if (isIOS()) return { kind: "ios-safari" };
+  if (isAndroid()) return { kind: "android-manual" };
+  if (isMacSafari()) return { kind: "mac-safari" };
+  if (isFirefox()) return { kind: "unsupported" };
   return { kind: "manual" };
 }
