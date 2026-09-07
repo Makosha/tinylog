@@ -2,7 +2,7 @@ import { useState } from "react";
 import { actions, useStore } from "@/store/store";
 import { Chip } from "./Chip";
 import { Field } from "./Field";
-import { CheckIcon, DownloadIcon } from "./icons";
+import { CloseIcon, DownloadIcon } from "./icons";
 import { Sheet } from "./Sheet";
 
 function download(name: string, text: string) {
@@ -23,14 +23,24 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet label="Settings" onClose={onClose}>
-      <p className="mb-4 font-display text-xl font-bold text-foreground">Settings</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="font-display text-xl font-bold leading-tight text-foreground">Settings</p>
+          <p className="text-xs text-muted-foreground">saved as you go</p>
+        </div>
+        <button type="button" aria-label="Close" onClick={onClose} className="flex size-11 items-center justify-center rounded-2xl border border-border bg-secondary/60 text-foreground active:scale-95">
+          <CloseIcon className="size-5" />
+        </button>
+      </div>
       <Field label="Baby's name">
         <input
           type="text"
           value={name}
           placeholder="optional"
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => actions.setPrefs({ babyName: name.trim() || undefined })}
+          onChange={(e) => {
+            setName(e.target.value);
+            actions.setPrefs({ babyName: e.target.value.trim() || undefined });
+          }}
           className={input}
         />
       </Field>
@@ -74,9 +84,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <DownloadIcon className="size-5" /> Export a backup
         </button>
       </Field>
-      <button type="button" onClick={onClose} className="surface-warm flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold active:scale-[0.98]">
-        <CheckIcon className="size-5" /> Done
-      </button>
     </Sheet>
   );
 }

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { LABEL, isRest, type LogEvent } from "@/domain/events";
+import { OtherFields } from "./OtherFields";
+import { eventTone } from "./kind";
 import type { EventPatch } from "@/domain/state";
 import { CheckIcon, ICON, UndoIcon } from "./icons";
-import { DiaperChips } from "./DiaperChips";
 import { Field } from "./Field";
 import { MinutesChips } from "./MinutesChips";
 import { MlChips } from "./MlChips";
@@ -13,7 +14,7 @@ import { TimeStepper } from "./TimeStepper";
 export interface Capture {
   eventId: string;
   /** what the tap did; decides which fields are shown */
-  action: "feed" | "rest" | "wake" | "diaper";
+  action: "feed" | "rest" | "wake" | "other";
   /** moment of the tap */
   tappedAt: number;
   /** feed only: the rest this feed interrupted (baby woke up to feed) */
@@ -24,8 +25,6 @@ export const COUNTDOWN = 10_000;
 const TICK = 100;
 /** ignore touches for this long after the panel appears (double-tap protection) */
 const GUARD = 350;
-
-const TONE = { wake: "text-wake", breast: "text-breast", bottle: "text-feed", sleep: "text-sleep", nap: "text-nap", diaper: "text-wake" } as const;
 
 /**
  * Replaces the action buttons right after a tap. Shows the fields that
@@ -81,6 +80,7 @@ export function CapturePanel({
   const isWake = capture.action === "wake";
   const kind = isWake ? "wake" : event.kind === "feed" ? event.source : event.kind;
   const Icon = ICON[kind];
+  const tone = isWake ? "text-wake" : eventTone(event);
   const title = isWake ? "Woke up" : LABEL[kind];
   const timeValue = isWake && isRest(event) ? (event.endAt ?? capture.tappedAt) : event.at;
 
@@ -98,7 +98,7 @@ export function CapturePanel({
       className={`card-soft animate-pop-in relative overflow-hidden border-primary/40 p-4 shadow-lg ${guarded ? "pointer-events-none" : ""}`}
     >
       <div className="mb-4 flex items-center gap-3">
-        <span className={`icon-tile size-11 ${TONE[kind]}`}>
+        <span className={`icon-tile size-11 ${tone}`}>
           <Icon className="size-6" />
         </span>
         <div className="min-w-0 flex-1">
@@ -137,11 +137,7 @@ export function CapturePanel({
           <MlChips value={event.ml} onChange={(ml) => onPatch({ ml })} />
         </Field>
       ) : null}
-      {event.kind === "diaper" ? (
-        <Field label="What">
-          <DiaperChips wet={event.wet} dirty={event.dirty} onChange={(v) => onPatch(v)} />
-        </Field>
-      ) : null}
+      {event.kind !== "feed" && !isRest(event) ? <OtherFields event={event} onPatch={onPatch} /> : null}
 
       {capture.closedRestId && onStayedAsleep ? (
         <div

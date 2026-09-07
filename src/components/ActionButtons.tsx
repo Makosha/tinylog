@@ -7,14 +7,14 @@ export type Action =
   | { type: "feed"; source: FeedSource }
   | { type: "rest"; kind: RestKind }
   | { type: "wake" }
-  | { type: "diaper" };
+  | { type: "other" };
 
 export const TONE = {
   nap: "text-nap border-nap/30 bg-nap/10",
   sleep: "text-sleep border-sleep/30 bg-sleep/10",
   breast: "text-breast border-breast/30 bg-breast/10",
   bottle: "text-feed border-feed/30 bg-feed/10",
-  diaper: "text-wake border-wake/30 bg-wake/10",
+  other: "text-muted-foreground border-border bg-secondary/40",
 } as const;
 
 type Key = keyof typeof TONE;
@@ -58,8 +58,8 @@ const suggestionKey = (s: Suggestion): Key => (s.type === "feed" ? s.source : s.
 const suggestionAction = (s: Suggestion): Action => (s.type === "feed" ? { type: "feed", source: s.source } : { type: "rest", kind: s.kind });
 
 export function ActionButtons({ state, suggestion, onAction }: { state: BabyState; suggestion: Suggestion | null; onAction: (a: Action) => void }) {
-  const diaper = <Big k="diaper" wide onClick={() => onAction({ type: "diaper" })} />;
-  const actionFor = (k: Key): Action => (k === "breast" || k === "bottle" ? { type: "feed", source: k } : k === "diaper" ? { type: "diaper" } : { type: "rest", kind: k });
+  const other = <Big k="other" wide onClick={() => onAction({ type: "other" })} />;
+  const actionFor = (k: Key): Action => (k === "breast" || k === "bottle" ? { type: "feed", source: k } : k === "other" ? { type: "other" } : { type: "rest", kind: k });
 
   if (state.name !== "awake") {
     return (
@@ -67,7 +67,7 @@ export function ActionButtons({ state, suggestion, onAction }: { state: BabyStat
         <Hero k="wake" label={LABEL.wake} onClick={() => onAction({ type: "wake" })} />
         <Big k="breast" onClick={() => onAction({ type: "feed", source: "breast" })} />
         <Big k="bottle" onClick={() => onAction({ type: "feed", source: "bottle" })} />
-        {diaper}
+        {other}
       </section>
     );
   }
@@ -82,7 +82,7 @@ export function ActionButtons({ state, suggestion, onAction }: { state: BabyStat
             <Big key={k} k={k} onClick={() => onAction(actionFor(k))} />
           ))}
         </div>
-        {diaper}
+        {other}
       </section>
     );
   }
@@ -92,7 +92,7 @@ export function ActionButtons({ state, suggestion, onAction }: { state: BabyStat
       <Big k="sleep" tall onClick={() => onAction({ type: "rest", kind: "sleep" })} />
       <Big k="breast" onClick={() => onAction({ type: "feed", source: "breast" })} />
       <Big k="bottle" onClick={() => onAction({ type: "feed", source: "bottle" })} />
-      {diaper}
+      {other}
     </section>
   );
 }

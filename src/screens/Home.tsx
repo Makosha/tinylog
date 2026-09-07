@@ -7,9 +7,13 @@ import { ageLabel, durationLabel } from "@/domain/time";
 import { actions, useStore } from "@/store/store";
 import { resolveTheme } from "@/store/theme";
 import { showToast, undoToast } from "@/store/toast";
+import { navigate } from "@/store/route";
+import type { Measurement } from "@/domain/growth";
 import { ActionButtons, type Action } from "@/components/ActionButtons";
 import { CapturePanel, type Capture } from "@/components/CapturePanel";
 import { EventEditor } from "@/components/EventEditor";
+import { MeasureSheet } from "@/components/MeasureSheet";
+import { OtherSheet, type OtherChoice } from "@/components/OtherSheet";
 import { GearIcon, ICON } from "@/components/icons";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { StatTile } from "@/components/StatTile";
@@ -25,12 +29,14 @@ const DEBOUNCE = 500;
 const buzz = () => navigator.vibrate?.(20);
 
 export function Home() {
-  const { events, prefs, storageOk } = useStore();
+  const { events, measurements, prefs, storageOk } = useStore();
   const now = useNow();
   const [capture, setCapture] = useState<Capture | null>(null);
   const [stayedAsleep, setStayedAsleep] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
+  const [other, setOther] = useState(false);
+  const [measuringId, setMeasuringId] = useState<string | null>(null);
   const lastTap = useRef(0);
   const warned = useRef(false);
 
@@ -58,13 +64,31 @@ export function Home() {
     } else if (a.type === "rest") {
       const e = actions.startRest(a.kind, tappedAt);
       setCapture({ eventId: e.id, action: "rest", tappedAt });
-    } else if (a.type === "diaper") {
-      const e = actions.diaper(tappedAt);
-      setCapture({ eventId: e.id, action: "diaper", tappedAt });
+    } else if (a.type === "other") {
+      setOther(true);
     } else {
       const e = actions.wake(tappedAt);
       if (e) setCapture({ eventId: e.id, action: "wake", tappedAt });
     }
+  };
+
+  const pickOther = (c: OtherChoice) => {
+    setOther(false);
+    const tappedAt = Date.now();
+    buzz();
+    if (c.type === "measure") {
+      const last = measurements[0];
+      const created = actions.addMeasurement({
+        at: tappedAt,
+        ...(last?.weightKg ? { weightKg: last.weightKg } : {}),
+        ...(last?.lengthCm ? { lengthCm: last.lengthCm } : {}),
+        ...(last?.headCm ? { headCm: last.headCm } : {}),
+      });
+      setMeasuringId(created.id);
+      return;
+    }
+    const e = actions.addOther(c.kind, tappedAt);
+    setCapture({ eventId: e.id, action: "other", tappedAt });
   };
 
   const undoCapture = (c: Capture) => {
@@ -84,6 +108,7 @@ export function Home() {
   };
 
   const captured = capture ? events.find((e) => e.id === capture.eventId) : undefined;
+  const measuring = measuringId ? measurements.find((m) => m.id === measuringId) : undefined;
   const light = resolveTheme(prefs.theme) === "light";
   const age = prefs.babyDob ? ageLabel(prefs.babyDob, now) : "";
   const restTotal = stats.nightMins + stats.napMins;
@@ -197,6 +222,23 @@ export function Home() {
 
       {editingId ? <EventEditor eventId={editingId} now={now} onClose={() => setEditingId(null)} /> : null}
       {settings ? <SettingsSheet onClose={() => setSettings(false)} /> : null}
+      {other ? <OtherSheet onPick={pickOther} onClose={() => setOther(false)} /> : null}
+      {measuring ? (
+        <MeasureSheet
+          measurement={measuring}
+          now={now}
+          onPatch={(p) => actions.updateMeasurement(measuring.id, p)}
+          onDelete={() => {
+            const removed = actions.deleteMeasurement(measuring.id);
+            setMeasuringId(null);
+            if (removed) undoToast("Measurement deleted", () => actions.restoreMeasurement(removed as Measurement));
+          }}
+          onClose={() => {
+            setMeasuringId(null);
+            showToast({ message: "Measurement saved", action: { label: "Growth", onClick: () => navigate("growth") } });
+          }}
+        />
+      ) : null}
     </main>
   );
 }

@@ -3,12 +3,13 @@ import { LABEL, eventLabel, isRest, type LogEvent, type RestKind } from "@/domai
 import type { EventPatch } from "@/domain/state";
 import { dayLabel, durationLabel } from "@/domain/time";
 import { Chip } from "./Chip";
-import { DiaperChips } from "./DiaperChips";
 import { Field } from "./Field";
-import { CheckIcon, ICON, TrashIcon } from "./icons";
+import { CloseIcon, ICON, TrashIcon } from "./icons";
 import { MinutesChips } from "./MinutesChips";
 import { MlChips } from "./MlChips";
+import { OtherFields } from "./OtherFields";
 import { Sheet } from "./Sheet";
+import { eventTone, iconKey } from "./kind";
 import { SideChips } from "./SideChips";
 import { TimeStepper } from "./TimeStepper";
 
@@ -33,18 +34,18 @@ export function EditSheet({
   onClose: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const Icon = ICON[event.kind === "feed" ? event.source : event.kind];
-  const tone = event.kind === "feed" ? (event.source === "breast" ? "text-breast" : "text-feed") : { sleep: "text-sleep", nap: "text-nap", diaper: "text-wake" }[event.kind];
+  const Icon = ICON[iconKey(event)];
+  const tone = eventTone(event);
 
   return (
     <Sheet label={`Edit ${eventLabel(event)}`} onClose={onClose}>
-      <div className="mb-4 flex items-center gap-3">
-        <span className={`icon-tile size-11 ${tone}`}>
+      <div className="mb-4 flex items-center gap-2">
+        <span className={`icon-tile size-11 shrink-0 ${tone}`}>
           <Icon className="size-6" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-xl font-bold leading-tight text-foreground">{eventLabel(event)}</p>
-          <p className="text-xs text-muted-foreground">{dayLabel(event.at, now)}</p>
+          <p className="text-xs text-muted-foreground">{dayLabel(event.at, now)} · saved as you go</p>
         </div>
         <button
           type="button"
@@ -54,7 +55,10 @@ export function EditSheet({
             confirmDelete ? "bg-destructive text-destructive-foreground" : "text-destructive active:bg-destructive/10"
           }`}
         >
-          <TrashIcon className="size-4" /> {confirmDelete ? "Tap again to delete" : "Delete"}
+          <TrashIcon className="size-4" /> {confirmDelete ? "Tap again" : "Delete"}
+        </button>
+        <button type="button" aria-label="Close" onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-secondary/60 text-foreground active:scale-95">
+          <CloseIcon className="size-5" />
         </button>
       </div>
 
@@ -138,19 +142,10 @@ export function EditSheet({
           <Field label="Time">
             <TimeStepper value={event.at} max={now} onChange={(at) => onPatch({ at })} />
           </Field>
-          <Field label="What">
-            <DiaperChips wet={event.wet} dirty={event.dirty} onChange={(v) => onPatch(v)} />
-          </Field>
+          <OtherFields event={event} onPatch={onPatch} />
         </>
       )}
 
-      <button
-        type="button"
-        onClick={onClose}
-        className="surface-warm flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold active:scale-[0.98]"
-      >
-        <CheckIcon className="size-5" /> Done
-      </button>
     </Sheet>
   );
 }

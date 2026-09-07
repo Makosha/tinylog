@@ -3,8 +3,7 @@ import { eventDetail, eventLabel, isRest, type LogEvent } from "@/domain/events"
 import type { TimelineItem } from "@/domain/stats";
 import { durationLabel, formatTime } from "@/domain/time";
 import { ICON } from "./icons";
-
-const TONE = { feed: "", sleep: "text-sleep", nap: "text-nap", diaper: "text-wake" } as const;
+import { eventTone, iconKey } from "./kind";
 
 function Row({
   Icon,
@@ -50,9 +49,9 @@ function Row({
 }
 
 function eventRow(e: LogEvent, now: number, onSelect: (e: LogEvent) => void, nested?: boolean) {
-  const Icon = ICON[e.kind === "feed" ? e.source : e.kind];
+  const Icon = ICON[iconKey(e)];
   const open = isRest(e) && e.endAt === undefined;
-  const tone = e.kind === "feed" ? (e.source === "breast" ? "text-breast" : "text-feed") : TONE[e.kind];
+  const tone = eventTone(e);
   const detail = open ? `still ${e.kind === "sleep" ? "asleep" : "napping"} · ${durationLabel(e.at, now)}` : isRest(e) ? durationLabel(e.at, e.endAt!) : eventDetail(e);
   const time = isRest(e) ? `${formatTime(e.at)} → ${e.endAt !== undefined ? formatTime(e.endAt) : "now"}` : formatTime(e.at);
   return <Row key={e.id} Icon={Icon} tone={tone} title={eventLabel(e)} detail={detail} time={time} open={open} onClick={() => onSelect(e)} nested={nested} />;

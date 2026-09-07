@@ -24,7 +24,7 @@ Awake ──Nap / Sleep──▶ Napping / Asleep ──Wake up──▶ Awake
 Napping / Asleep ──Breast / Bottle──▶ Awake   (the rest is closed at the feed)
    └─ "Stayed asleep" on that feed joins the sleep back together: a dream feed
 Awake ──Breast / Bottle──▶ Awake
-Diaper: never changes the state
+Other (diaper, temperature, medicine, tummy time, bath, milestone, note): never changes the state
 ```
 
 Every big button saves the event at "now" in one tap. A capture panel then
@@ -34,7 +34,13 @@ and minutes for breast, ml for bottle (prefilled with the last amount), wet
 or dirty for diapers, and the dream-feed switch when the feed interrupted a
 sleep. Touching the panel pauses the countdown, so does the screen going
 dark; Done closes it; Undo removes the event. Every save and delete shows a
-toast with Undo. Tap any row to edit or delete it (delete asks twice).
+toast with Undo. Tap any row to edit or delete it (delete asks twice). Edit
+sheets and settings save every change immediately; there is no Save button.
+
+"Other" opens a chooser: diaper (wet / dirty), temperature (°C, fever
+marked from 38), medicine (name and optional dose), tummy time, bath,
+milestone (first smile, rolled over, ...) and free-text note, plus weight
+and height, which open the growth measurement sheet.
 
 The home screen shows the last 24 hours rather than the calendar day, so a
 night is never split at midnight. Consecutive night sleeps separated only by

@@ -41,7 +41,7 @@ export function MeasureSheet({
           onBlur={() => setConfirmDelete(false)}
           className={`flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold ${confirmDelete ? "bg-destructive text-destructive-foreground" : "text-destructive"}`}
         >
-          <TrashIcon className="size-4" /> {confirmDelete ? "Tap again to delete" : "Delete"}
+          <TrashIcon className="size-4" /> {confirmDelete ? "Tap again" : "Delete"}
         </button>
         <button type="button" aria-label="Close" onClick={onClose} className="flex size-11 items-center justify-center rounded-2xl border border-border bg-secondary/60 text-foreground active:scale-95">
           <CloseIcon className="size-5" />

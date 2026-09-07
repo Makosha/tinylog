@@ -24,6 +24,12 @@ describe("eventsInWindow (last 24 h)", () => {
   it("at 8 AM still shows the night that ended at 6", () => {
     expect(eventsInWindow(events, at(7, 8)).map((e) => e.id)).toContain("s1");
   });
+  it("includes an event logged a few seconds after `now` was sampled", () => {
+    const now = at(7, 12);
+    const fresh: LogEvent[] = [{ id: "f", kind: "feed", at: now + 20_000, source: "bottle" }];
+    expect(eventsInWindow(fresh, now)).toHaveLength(1);
+    expect(windowStats(fresh, now).feeds).toBe(1);
+  });
   it("includes a rest that started before the window but is still open", () => {
     expect(eventsInWindow([{ id: "s", kind: "sleep", at: at(5, 20) }], at(7, 8)).map((e) => e.id)).toEqual(["s"]);
   });
@@ -60,6 +66,7 @@ describe("groupNights", () => {
       { id: "f2", kind: "feed", at: at(7, 4), source: "breast" },
       { id: "s2", kind: "sleep", at: at(7, 1, 30), endAt: at(7, 4) },
       { id: "d1", kind: "diaper", at: at(7, 1, 20), wet: true, dirty: false },
+      { id: "t1", kind: "temperature", at: at(7, 1, 10), celsius: 37.2 },
       { id: "f1", kind: "feed", at: at(7, 1), source: "breast" },
       { id: "s1", kind: "sleep", at: at(6, 20), endAt: at(7, 1) },
       { id: "n0", kind: "nap", at: at(6, 15), endAt: at(6, 16) },
@@ -70,7 +77,7 @@ describe("groupNights", () => {
     expect(n.type).toBe("night");
     if (n.type !== "night") return;
     expect(n.parts.map((p) => p.id)).toEqual(["s3", "s2", "s1"]);
-    expect(n.inside.map((p) => p.id)).toEqual(["f2", "d1", "f1"]);
+    expect(n.inside.map((p) => p.id)).toEqual(["f2", "d1", "t1", "f1"]);
     expect(n.wakings).toBe(2);
     expect(n.open).toBe(true);
     expect(n.at).toBe(at(6, 20));

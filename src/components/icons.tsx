@@ -135,6 +135,83 @@ export const DownloadIcon = (p: P) => (
   </svg>
 );
 
+export const ThermometerIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M10 4.5a2 2 0 0 1 4 0v9.3a4 4 0 1 1-4 0z" />
+    <path d="M12 9v6" />
+    <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const PillIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3.5" y="8.5" width="17" height="7" rx="3.5" transform="rotate(-40 12 12)" />
+    <path d="M9.5 8.5l5 7" transform="rotate(-40 12 12)" />
+  </svg>
+);
+
+/** Baby on its tummy, head up. */
+export const TummyIcon = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="18" cy="9" r="3" />
+    <path d="M15.5 11.5c-2 2-5 3-8.5 3H4" />
+    <path d="M7 14.5c1 1.5 2.5 2.5 4.5 3" />
+    <path d="M3.5 19.5h17" />
+  </svg>
+);
+
+export const BathIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 12.5h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" />
+    <path d="M6 12.5V6.5a2 2 0 0 1 4 0" />
+    <path d="M7 19.5v1.5M17 19.5v1.5" />
+    <path d="M13.5 8.5v1M16 7v1M18.5 8.5v1" strokeWidth={1.5} />
+  </svg>
+);
+
+export const StarIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 16.9l-5.3 2.8 1.1-5.9-4.3-4.1 5.9-.8z" />
+  </svg>
+);
+
+export const NoteIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M6 4.5h9l4 4v11H6z" />
+    <path d="M15 4.5v4h4" />
+    <path d="M9 12h6M9 15.5h4" />
+  </svg>
+);
+
+export const ScaleIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="4" y="4" width="16" height="16" rx="3" />
+    <path d="M8.5 10.5a4 4 0 0 1 7 0" />
+    <path d="M12 12.5l1.8-2.2" />
+  </svg>
+);
+
+export const RulerIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="8.5" width="18" height="7" rx="1.5" />
+    <path d="M7 8.5v2.5M10.5 8.5v3.5M14 8.5v2.5M17.5 8.5v3.5" />
+  </svg>
+);
+
+export const MoreIcon = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="6.5" cy="6.5" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="6.5" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="17.5" cy="6.5" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="6.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="17.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="6.5" cy="17.5" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="17.5" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="17.5" cy="17.5" r="1.6" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export const CopyIcon = (p: P) => (
   <svg {...base(p)}>
     <rect x="8.5" y="8.5" width="11" height="11" rx="2.5" />
@@ -167,4 +244,13 @@ export const ICON = {
   awake: SunIcon,
   wake: BellIcon,
   diaper: DiaperIcon,
+  temperature: ThermometerIcon,
+  medicine: PillIcon,
+  tummy: TummyIcon,
+  bath: BathIcon,
+  milestone: StarIcon,
+  note: NoteIcon,
+  weight: ScaleIcon,
+  length: RulerIcon,
+  other: MoreIcon,
 } as const;

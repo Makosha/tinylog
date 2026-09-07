@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { migrateV1, newId, parseEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
+import { migrateV1, newId, parseEvents, type FeedSource, type LogEvent, type OtherKind, type RestKind } from "@/domain/events";
 import * as S from "@/domain/state";
 import { parseMeasurements, sortMeasurements, type Measurement, type Sex } from "@/domain/growth";
 
@@ -120,8 +120,8 @@ export const actions = {
     setEvents(r.events);
     return r;
   },
-  diaper(at = Date.now()) {
-    const r = S.diaper(snap.events, at);
+  addOther(kind: OtherKind, at = Date.now()) {
+    const r = S.addOther(snap.events, kind, at);
     setEvents(r.events);
     return r.event;
   },

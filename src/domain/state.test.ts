@@ -3,6 +3,7 @@ import {
   deriveState,
   feed,
   diaper,
+  addOther,
   startRest,
   wake,
   reopenRest,
@@ -83,6 +84,19 @@ describe("transitions", () => {
     const { events, event } = diaper([{ id: "a", kind: "sleep", at: m(-30) }], T0);
     expect(event).toMatchObject({ kind: "diaper", wet: true, dirty: false });
     expect(deriveState(events, T0).name).toBe("asleep");
+  });
+  it("other events start with sensible defaults and never change the state", () => {
+    const asleep: LogEvent[] = [{ id: "a", kind: "sleep", at: m(-30) }];
+    expect(addOther(asleep, "temperature", T0).event).toMatchObject({ kind: "temperature", celsius: 36.8 });
+    expect(addOther(asleep, "medicine", T0).event).toMatchObject({ kind: "medicine", name: "Vitamin D" });
+    expect(addOther(asleep, "milestone", T0).event).toMatchObject({ kind: "milestone", title: "First smile" });
+    for (const k of ["tummy", "bath", "note"] as const) expect(deriveState(addOther(asleep, k, T0).events, T0).name).toBe("asleep");
+  });
+  it("updateEvent drops an empty dose and zero tummy minutes", () => {
+    const med = updateEvent([{ id: "x", kind: "medicine", at: T0, name: "Paracetamol", dose: "2.5 ml" }], "x", { dose: "" });
+    expect(med[0]).not.toHaveProperty("dose");
+    const tummy = updateEvent([{ id: "y", kind: "tummy", at: T0, minutes: 5 }], "y", { minutes: 0 });
+    expect(tummy[0]).not.toHaveProperty("minutes");
   });
   it("reopenRest undoes the wake caused by a dream feed", () => {
     const { events } = feed([{ id: "a", kind: "sleep", at: m(-30) }], "breast", T0);

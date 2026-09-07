@@ -6,6 +6,8 @@ import {
   type BreastSide,
   type FeedSource,
   type LogEvent,
+  type OtherEvent,
+  type OtherKind,
   type RestEvent,
   type RestKind,
 } from "./events";
@@ -70,11 +72,34 @@ export function feed(events: LogEvent[], source: FeedSource, at: number, default
   return { events: sortEvents([event, ...events]), event };
 }
 
-/** Diapers never change the state. */
-export function diaper(events: LogEvent[], at: number): Result<LogEvent> {
-  const event: LogEvent = { id: newId(), kind: "diaper", at, wet: true, dirty: false };
+function blankOther(kind: OtherKind, at: number): OtherEvent {
+  const id = newId();
+  switch (kind) {
+    case "diaper":
+      return { id, kind, at, wet: true, dirty: false };
+    case "temperature":
+      return { id, kind, at, celsius: 36.8 };
+    case "medicine":
+      return { id, kind, at, name: "Vitamin D" };
+    case "tummy":
+      return { id, kind, at };
+    case "bath":
+      return { id, kind, at };
+    case "milestone":
+      return { id, kind, at, title: "First smile" };
+    case "note":
+      return { id, kind, at, text: "" };
+  }
+}
+
+/** "Other" events (diaper, temperature, medicine, ...) never change the state. */
+export function addOther(events: LogEvent[], kind: OtherKind, at: number): Result<OtherEvent> {
+  const event = blankOther(kind, at);
   return { events: sortEvents([event, ...events]), event };
 }
+
+/** Kept for callers that only log diapers. */
+export const diaper = (events: LogEvent[], at: number) => addOther(events, "diaper", at);
 
 export function startRest(events: LogEvent[], kind: RestKind, at: number): Result<RestEvent> {
   const open = openRest(events);
@@ -138,6 +163,11 @@ export type EventPatch = Partial<{
   minutes: number | undefined;
   wet: boolean;
   dirty: boolean;
+  celsius: number;
+  name: string;
+  dose: string | undefined;
+  title: string;
+  text: string;
 }>;
 
 export function updateEvent(events: LogEvent[], id: string, patch: EventPatch): LogEvent[] {
@@ -150,6 +180,8 @@ export function updateEvent(events: LogEvent[], id: string, patch: EventPatch): 
         if (kind) next.kind = kind;
         if (next.endAt !== undefined && next.endAt < next.at) next.endAt = next.at;
       }
+      if (next.kind === "tummy" && (next.minutes === undefined || next.minutes <= 0)) delete next.minutes;
+      if (next.kind === "medicine" && !next.dose) delete next.dose;
       if (next.kind === "feed") {
         if (next.ml === undefined || next.ml <= 0) delete next.ml;
         if (next.minutes === undefined || next.minutes <= 0) delete next.minutes;

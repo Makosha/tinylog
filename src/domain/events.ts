@@ -34,8 +34,62 @@ export interface DiaperEvent {
   dirty: boolean;
 }
 
-export type LogEvent = FeedEvent | RestEvent | DiaperEvent;
+export interface TemperatureEvent {
+  id: string;
+  kind: "temperature";
+  at: number;
+  celsius: number;
+}
+
+export const MEDICINES = ["Vitamin D", "Paracetamol", "Ibuprofen", "Colic drops", "Other"] as const;
+
+export interface MedicineEvent {
+  id: string;
+  kind: "medicine";
+  at: number;
+  name: string;
+  dose?: string;
+}
+
+export interface TummyEvent {
+  id: string;
+  kind: "tummy";
+  at: number;
+  minutes?: number;
+}
+
+export interface BathEvent {
+  id: string;
+  kind: "bath";
+  at: number;
+}
+
+export const MILESTONES = ["First smile", "Laughed", "Held head up", "Rolled over", "Grasped a toy", "Slept through the night"] as const;
+
+export interface MilestoneEvent {
+  id: string;
+  kind: "milestone";
+  at: number;
+  title: string;
+}
+
+export interface NoteEvent {
+  id: string;
+  kind: "note";
+  at: number;
+  text: string;
+}
+
+export type OtherEvent = DiaperEvent | TemperatureEvent | MedicineEvent | TummyEvent | BathEvent | MilestoneEvent | NoteEvent;
+export type OtherKind = OtherEvent["kind"];
+/** Kinds offered under "Other", in display order. */
+export const OTHER_KINDS: OtherKind[] = ["diaper", "temperature", "medicine", "tummy", "bath", "milestone", "note"];
+
+export type LogEvent = FeedEvent | RestEvent | OtherEvent;
 export type EventKind = LogEvent["kind"];
+
+/** Above this the temperature is shown as a fever. */
+export const FEVER_C = 38;
 
 export const newId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -50,6 +104,13 @@ export const LABEL = {
   sleep: "Sleep",
   nap: "Nap",
   diaper: "Diaper",
+  temperature: "Temperature",
+  medicine: "Medicine",
+  tummy: "Tummy time",
+  bath: "Bath",
+  milestone: "Milestone",
+  note: "Note",
+  other: "Other",
   wake: "Wake up",
   awake: "Awake",
   asleep: "Asleep",
@@ -68,8 +129,22 @@ export function eventDetail(e: LogEvent): string {
         ? `${e.ml}ml`
         : "";
   }
-  if (e.kind === "diaper") return [e.wet ? "wet" : null, e.dirty ? "dirty" : null].filter(Boolean).join(" · ");
-  return "";
+  switch (e.kind) {
+    case "diaper":
+      return [e.wet ? "wet" : null, e.dirty ? "dirty" : null].filter(Boolean).join(" · ");
+    case "temperature":
+      return `${e.celsius.toFixed(1)}°C${e.celsius >= FEVER_C ? " · fever" : ""}`;
+    case "medicine":
+      return [e.name, e.dose].filter(Boolean).join(" · ");
+    case "tummy":
+      return e.minutes ? `${e.minutes}m` : "";
+    case "milestone":
+      return e.title;
+    case "note":
+      return e.text;
+    default:
+      return "";
+  }
 }
 
 /** Newest first. */
@@ -110,7 +185,7 @@ export function parseEvents(raw: unknown): LogEvent[] | null {
       e &&
       typeof e.id === "string" &&
       typeof e.at === "number" &&
-      (e.kind === "feed" || e.kind === "sleep" || e.kind === "nap" || e.kind === "diaper"),
+      ["feed", "sleep", "nap", ...OTHER_KINDS].includes(e.kind),
   );
   return ok ? sortEvents(raw as LogEvent[]) : null;
 }

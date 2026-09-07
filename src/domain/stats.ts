@@ -7,8 +7,8 @@ export function eventsInRange(events: LogEvent[], from: number, to: number, now:
   return events.filter((e) => (e.at >= from && e.at < to) || (isRest(e) && e.at < to && (e.endAt ?? now) > from));
 }
 
-/** Events of the last 24 h. Newest first. */
-export const eventsInWindow = (events: LogEvent[], now: number, windowMs = WINDOW) => eventsInRange(events, now - windowMs, now + 1, now);
+/** Events of the last 24 h, including anything logged a moment after `now` was sampled. Newest first. */
+export const eventsInWindow = (events: LogEvent[], now: number, windowMs = WINDOW) => eventsInRange(events, now - windowMs, Infinity, now);
 
 export interface WindowStats {
   feeds: number;
@@ -52,8 +52,8 @@ export function rangeStats(events: LogEvent[], from: number, to: number, now: nu
   };
 }
 
-/** Stats for the last 24 h. */
-export const windowStats = (events: LogEvent[], now: number, windowMs = WINDOW) => rangeStats(events, now - windowMs, now + 1, now);
+/** Stats for the last 24 h, including anything logged a moment after `now` was sampled. */
+export const windowStats = (events: LogEvent[], now: number, windowMs = WINDOW) => rangeStats(events, now - windowMs, Infinity, now);
 
 export interface DaySeries {
   /** start of the calendar day */
@@ -81,7 +81,7 @@ export type TimelineItem =
       type: "night";
       /** the sleep segments, newest first */
       parts: RestEvent[];
-      /** feeds and diapers that happened between the segments, newest first */
+      /** everything that happened between the segments (feeds, diapers, ...), newest first */
       inside: LogEvent[];
       at: number;
       endAt?: number;
@@ -115,7 +115,7 @@ export function groupNights(events: LogEvent[]): TimelineItem[] {
         inside.push(...pending);
         pending = [];
         j++;
-      } else if (n.kind === "feed" || n.kind === "diaper") {
+      } else if (n.kind !== "nap") {
         pending.push(n);
         j++;
       } else break;

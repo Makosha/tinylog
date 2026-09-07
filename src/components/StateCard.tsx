@@ -1,4 +1,4 @@
-import { LABEL, eventDetail, type LogEvent } from "@/domain/events";
+import { LABEL, eventDetail, eventLabel, type LogEvent } from "@/domain/events";
 import type { BabyState } from "@/domain/state";
 import type { WindowStats } from "@/domain/stats";
 import { durationLabel, formatTime } from "@/domain/time";
@@ -76,7 +76,7 @@ export function StateCard({
           className="mt-3 flex h-10 w-full items-center justify-between rounded-xl border border-border bg-card px-3 text-sm active:scale-[0.99]"
         >
           <span className="truncate text-muted-foreground">
-            Last: <span className="font-semibold text-foreground">{LABEL[lastEvent.kind === "feed" ? lastEvent.source : lastEvent.kind]}</span> {formatTime(lastEvent.at)}
+            Last: <span className="font-semibold text-foreground">{eventLabel(lastEvent)}</span> {formatTime(lastEvent.at)}
             {eventDetail(lastEvent) ? ` · ${eventDetail(lastEvent)}` : ""}
           </span>
           <span className="font-bold text-primary">Edit</span>
