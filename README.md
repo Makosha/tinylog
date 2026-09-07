@@ -95,6 +95,11 @@ Settings hold the baby's name, birth date, sex, and for a preterm baby the
 due date, which adds a corrected-age switch to the growth charts. Units (°C/°F, kg/lb·oz, cm/in, ml/fl oz) default from the phone's locale
 and can be switched; storage stays metric. A JSON backup can be exported. Theme (System / Light / Dark) is in settings.
 
+Fonts (Baloo 2, Nunito with Cyrillic) are self-hosted in `public/fonts`
+and precached, so first paint never waits on a font server; `index.html`
+carries an inline splash until React renders. The About page shows the
+measured startup time and whether the service worker cache is active.
+
 Code layout: `src/domain` is pure TypeScript (state machine, stats, growth
 maths, next-action heuristic, time helpers, unit-tested), `src/store` is the only module that touches
 `localStorage`, `src/components` and `src/screens` are the UI.

@@ -335,6 +335,9 @@ export const de: Dict = {
     privacyBody: "Das Protokoll verlässt das Telefon nie, außer du exportierst oder kopierst es selbst. Nur was du hier sendest, geht raus.",
     whoTitle: "Wachstumsstandards",
     whoBody: "Die Kurven sind die WHO-Wachstumsstandards für Kinder von 0 bis 2 Jahren.",
+    startup: "Gestartet in {t} s · Offline-Cache: {c}",
+    yes: "ja",
+    notYet: "noch nicht",
     version: "Version {v}",
   },
 };

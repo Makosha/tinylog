@@ -10,9 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="TinyLog" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
     <title>TinyLog</title>
     <script>
       (function () {
@@ -23,12 +20,19 @@
           if (light) r.classList.add("daylight");
           r.style.colorScheme = light ? "light" : "dark";
           r.style.background = light ? "#faf7f2" : "#221e19";
+          window.__startAt = Date.now();
         } catch (e) {}
       })();
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- shown until the app renders; replaced by React -->
+      <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-family:ui-rounded,system-ui,sans-serif;color:#f0e8d8">
+        <img src="/icon.svg" alt="" width="72" height="72" style="border-radius:20px" />
+        <div style="font-size:22px;font-weight:700;letter-spacing:-0.01em">TinyLog</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

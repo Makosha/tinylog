@@ -335,6 +335,9 @@ export const fr: Dict = {
     privacyBody: "Le journal ne quitte jamais le téléphone sauf si vous l'exportez ou le copiez vous-même. Seul ce que vous envoyez ici part.",
     whoTitle: "Normes de croissance",
     whoBody: "Les courbes sont les normes de croissance de l'enfant de l'OMS pour 0–2 ans.",
+    startup: "Démarré en {t} s · cache hors ligne : {c}",
+    yes: "oui",
+    notYet: "pas encore",
     version: "Version {v}",
   },
 };

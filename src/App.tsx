@@ -11,6 +11,7 @@ import { useStore } from "@/store/store";
 import { applyTheme, onSystemThemeChange } from "@/store/theme";
 import { useToast } from "@/store/toast";
 import { useReminderScheduler } from "@/store/notify";
+import { markRendered } from "@/store/startup";
 import { LOCALE } from "@/i18n/index";
 
 export default function App() {
@@ -31,6 +32,10 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [route]);
+
+  useEffect(() => {
+    if (hydrated) markRendered();
+  }, [hydrated]);
 
   if (!hydrated) return null;
   if (!prefs.welcomeDone) {

@@ -334,6 +334,9 @@ export const en = {
     privacyBody: "The log never leaves the phone unless you export it or copy it yourself. Feedback you send here is the only thing that does.",
     whoTitle: "Growth standards",
     whoBody: "Growth curves are the WHO Child Growth Standards for children 0–2 years.",
+    startup: "Started in {t} s · cached for offline: {c}",
+    yes: "yes",
+    notYet: "not yet",
     version: "Version {v}",
   },
 };

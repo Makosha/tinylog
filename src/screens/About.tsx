@@ -5,6 +5,7 @@ import { feedbackConfigured, sendFeedback } from "@/feedback";
 import { fill, useT } from "@/i18n/index";
 import { useStore } from "@/store/store";
 import { showToast } from "@/store/toast";
+import { startupInfo } from "@/store/startup";
 
 const VERSION = __APP_VERSION__;
 
@@ -84,7 +85,9 @@ export function About() {
           <p className="font-bold text-foreground">{t.about.whoTitle}</p>
           <p>{t.about.whoBody}</p>
         </div>
-        <p className="text-xs">{fill(t.about.version, { v: VERSION })}</p>
+        <p className="text-xs">
+          {fill(t.about.version, { v: VERSION })} · {fill(t.about.startup, { t: startupInfo().seconds.toFixed(1), c: startupInfo().cached ? t.about.yes : t.about.notYet })}
+        </p>
       </section>
     </main>
   );

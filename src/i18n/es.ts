@@ -335,6 +335,9 @@ export const es: Dict = {
     privacyBody: "El registro nunca sale del teléfono salvo que lo exportes o lo copies tú. Lo único que sale es lo que envías aquí.",
     whoTitle: "Patrones de crecimiento",
     whoBody: "Las curvas son los Patrones de Crecimiento Infantil de la OMS para niños de 0 a 2 años.",
+    startup: "Inicio en {t} s · caché sin conexión: {c}",
+    yes: "sí",
+    notYet: "aún no",
     version: "Versión {v}",
   },
 };
