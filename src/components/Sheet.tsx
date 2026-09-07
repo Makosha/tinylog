@@ -8,7 +8,7 @@ export function Sheet({ label, onClose, children }: { label: string; onClose: ()
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-background/70 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-background/80" onClick={onClose}>
       <div
         role="dialog"
         aria-label={label}

@@ -9,7 +9,7 @@ const TABS: { key: Route; label: string; Icon: (p: React.SVGProps<SVGSVGElement>
 
 export function TabBar({ route }: { route: Route }) {
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 backdrop-blur" aria-label="Pages">
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card" aria-label="Pages">
       <div className="mx-auto grid max-w-md grid-cols-3">
         {TABS.map(({ key, label, Icon }) => {
           const active = route === key;
