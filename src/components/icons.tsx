@@ -135,6 +135,13 @@ export const DownloadIcon = (p: P) => (
   </svg>
 );
 
+export const CopyIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="8.5" y="8.5" width="11" height="11" rx="2.5" />
+    <path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5" />
+  </svg>
+);
+
 export const ListIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M8 6.5h12M8 12h12M8 17.5h12" />

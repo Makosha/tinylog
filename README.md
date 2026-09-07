@@ -46,7 +46,9 @@ a feed when the baby's own recent feed interval is nearly up, a nap or
 night sleep (by hour) when an age-based wake window is nearly used.
 
 History shows any calendar day with totals, a 7-day sleep or feeds trend,
-and that day's timeline. Growth records weight, length and head
+and that day's timeline. Its "Copy log" button puts the last 1, 3, 7 or 14
+days on the clipboard as plain text, ready to paste into ChatGPT, Gemini or
+a message to the pediatrician. Growth records weight, length and head
 circumference and plots them against the WHO Child Growth Standards for
 the baby's sex (3rd, 15th, 50th, 85th, 97th percentiles), with the current
 percentile per measure. The WHO LMS tables are embedded from the official

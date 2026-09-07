@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNow } from "@/components/useNow";
+import { CopyLogSheet } from "@/components/CopyLogSheet";
+import { CopyIcon } from "@/components/icons";
 import { EventEditor } from "@/components/EventEditor";
 import { StatTile } from "@/components/StatTile";
 import { Timeline } from "@/components/Timeline";
@@ -23,6 +25,7 @@ export function History() {
   const [day, setDay] = useState(() => startOfDay(Date.now()));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [trend, setTrend] = useState<"sleep" | "feeds">("sleep");
+  const [copying, setCopying] = useState(false);
 
   const next = day + DAY;
   const isToday = isSameDay(day, now);
@@ -32,9 +35,18 @@ export function History() {
 
   return (
     <main className="safe-top mx-auto min-h-dvh w-full max-w-md px-4 pb-24">
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">History</h1>
-        <p className="text-sm text-muted-foreground">Day by day</p>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">History</h1>
+          <p className="text-sm text-muted-foreground">Day by day</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCopying(true)}
+          className="flex h-11 items-center gap-2 rounded-full border border-border bg-card pl-3 pr-4 text-sm font-bold text-foreground active:scale-95"
+        >
+          <CopyIcon className="size-5" /> Copy log
+        </button>
       </header>
 
       <div className="card-soft mb-6 flex items-center justify-between p-2">
@@ -101,6 +113,7 @@ export function History() {
       <Timeline items={items} now={now} onSelect={(e) => setEditingId(e.id)} />
 
       {editingId ? <EventEditor eventId={editingId} now={now} onClose={() => setEditingId(null)} /> : null}
+      {copying ? <CopyLogSheet now={now} onClose={() => setCopying(false)} /> : null}
     </main>
   );
 }
