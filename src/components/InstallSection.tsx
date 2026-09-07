@@ -22,10 +22,13 @@ export function InstallSection() {
   if (state.kind === "ios-safari") {
     return (
       <div className={box}>
-        <p className="mb-2 text-muted-foreground">iPhones don't offer an install button. It takes two taps in Safari:</p>
+        <p className="mb-2 text-muted-foreground">iPhones don't offer an install button. In Safari:</p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
             Tap <ShareIcon className="inline size-4 align-text-bottom" /> <b>Share</b> at the bottom of the screen
+          </li>
+          <li>
+            Scroll the list and tap <b>More</b> (⋯) if you don't see it
           </li>
           <li>
             Choose <b>Add to Home Screen</b>, then <b>Add</b>
@@ -41,7 +44,10 @@ export function InstallSection() {
         <ol className="list-decimal space-y-1 pl-5">
           <li>Open this address in <b>Safari</b></li>
           <li>
-            Tap <ShareIcon className="inline size-4 align-text-bottom" /> <b>Share</b>, then <b>Add to Home Screen</b>
+            Tap <ShareIcon className="inline size-4 align-text-bottom" /> <b>Share</b>, then <b>More</b> (⋯) if needed
+          </li>
+          <li>
+            Choose <b>Add to Home Screen</b>, then <b>Add</b>
           </li>
         </ol>
         <p className="mt-2 text-xs text-muted-foreground">Chrome on iPhone also has "Add to Home Screen" in its ⋯ menu, but it opens in Chrome rather than as an app.</p>
