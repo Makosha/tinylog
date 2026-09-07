@@ -22,7 +22,6 @@ export interface Capture {
 }
 
 export const COUNTDOWN = 10_000;
-const TICK = 100;
 /** ignore touches for this long after the panel appears (double-tap protection) */
 const GUARD = 350;
 
@@ -51,30 +50,39 @@ export function CapturePanel({
   onUndo: () => void;
   onDone: () => void;
 }) {
-  const [left, setLeft] = useState(COUNTDOWN);
   const [guarded, setGuarded] = useState(true);
+  /** bumps to restart the CSS drain animation and the close timer */
+  const [round, setRound] = useState(0);
+  const [hidden, setHidden] = useState(() => document.visibilityState !== "visible");
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
   useEffect(() => {
-    setLeft(COUNTDOWN);
     setGuarded(true);
+    setRound(0);
     const id = window.setTimeout(() => setGuarded(false), GUARD);
     return () => window.clearTimeout(id);
   }, [capture]);
 
+  // the screen going dark pauses the countdown; coming back restarts it
   useEffect(() => {
-    if (!autoClose) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      setLeft((l) => Math.max(0, l - TICK));
-    }, TICK);
-    return () => window.clearInterval(id);
-  }, [autoClose, capture]);
+    const onVis = () => {
+      const h = document.visibilityState !== "visible";
+      setHidden(h);
+      if (!h) setRound((r) => r + 1);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
+  // one timer per round; no per-tick re-render
   useEffect(() => {
-    if (autoClose && left === 0) doneRef.current();
-  }, [left, autoClose]);
+    if (!autoClose || hidden) return;
+    const id = window.setTimeout(() => doneRef.current(), COUNTDOWN);
+    return () => window.clearTimeout(id);
+  }, [autoClose, hidden, round, capture]);
+
+  const restart = () => setRound((r) => r + 1);
 
   if (!event) return null;
 
@@ -94,9 +102,9 @@ export function CapturePanel({
           e.stopPropagation();
           return;
         }
-        setLeft(COUNTDOWN);
+        restart();
       }}
-      onPointerUpCapture={() => setLeft(COUNTDOWN)}
+      onPointerUpCapture={restart}
       className={`card-soft animate-pop-in relative overflow-hidden border-primary/40 p-4 shadow-lg ${guarded ? "pointer-events-none" : ""}`}
     >
       <div className="mb-4 flex items-center gap-3">
@@ -172,9 +180,10 @@ export function CapturePanel({
 
       {autoClose ? (
         <span
+          key={`${capture.eventId}-${round}`}
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-1 origin-left bg-primary"
-          style={{ transform: `scaleX(${left / COUNTDOWN})` }}
+          style={{ animation: `drain ${COUNTDOWN}ms linear forwards`, animationPlayState: hidden ? "paused" : "running" }}
         />
       ) : null}
     </section>
