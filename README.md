@@ -33,6 +33,16 @@ name, birth date and sex. The About tab carries the story, privacy, WHO
 attribution, version, and a feedback box that posts to a Google Form
 (fill the IDs in `src/feedback.ts`; the box hides until then).
 
+## Look
+
+Light theme is "Paper & terracotta" (warm paper ground, terracotta primary,
+earthy state colours); night mode keeps the cocoa palette. Icons are
+duotone: a soft fill under the stroke. The state card is a time-aware hero:
+a subtitle that knows the time of day, the nap count or the night's
+wakings, time in this state with a Since line and Adjust, a last-fed or
+next-feed pill, and one hint from the baby's own week (average nap, longest
+stretch, next feed or nap due). Everything on it is derived from the log.
+
 ## Reminders
 
 Settings can turn on state-driven reminders: a feed when the baby's usual

@@ -25,7 +25,6 @@ import { Timeline } from "@/components/Timeline";
 import { useNow } from "@/components/useNow";
 
 const MIN = 60_000;
-const EDIT_LAST_FOR = 30 * MIN;
 const SNOOZE = 60 * MIN;
 const DEBOUNCE = 500;
 
@@ -57,7 +56,6 @@ export function Home() {
   const items = useMemo(() => groupNights(eventsInWindow(events, now)), [events, now]);
   const suggestion = useMemo(() => suggestNext(events, state, now, prefs.babyDob), [events, state, now, prefs.babyDob]);
   const stale = isStale(events, now) && (prefs.staleSnoozedUntil ?? 0) < now;
-  const lastEvent = !capture && events[0] && now - events[0].at < EDIT_LAST_FOR ? events[0] : undefined;
 
   const act = (a: Action) => {
     const tappedAt = Date.now();
@@ -147,7 +145,6 @@ export function Home() {
           stats={stats}
           now={now}
           stale={stale}
-          lastEvent={lastEvent}
           onWakeNow={() => act({ type: "wake" })}
           onSetWakeTime={() => {
             const e = actions.wake(Date.now());
@@ -157,7 +154,7 @@ export function Home() {
             }
           }}
           onSnooze={() => actions.setPrefs({ staleSnoozedUntil: now + SNOOZE })}
-          onEditLast={(e) => setEditingId(e.id)}
+          onAdjust={(e) => setEditingId(e.id)}
         />
       </div>
 

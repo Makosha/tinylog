@@ -11,7 +11,7 @@ export function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("daylight", light);
   root.style.colorScheme = light ? "light" : "dark";
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", light ? "#faf7f2" : "#221e19");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", light ? "#f4efe6" : "#221e19");
 }
 
 export function onSystemThemeChange(cb: () => void) {
