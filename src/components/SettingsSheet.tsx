@@ -6,7 +6,6 @@ import { Field } from "./Field";
 import { CloseIcon, DownloadIcon } from "./icons";
 import { Sheet } from "./Sheet";
 import { DateField } from "./DatePicker";
-import { InstallSection } from "./InstallSection";
 import type { Theme } from "@/store/store";
 
 function download(name: string, text: string) {
@@ -36,9 +35,6 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <CloseIcon className="size-5" />
         </button>
       </div>
-      <Field label="On this phone">
-        <InstallSection />
-      </Field>
       <Field label="Theme">
         <div className="flex rounded-2xl border border-border bg-secondary/60 p-1">
           {(

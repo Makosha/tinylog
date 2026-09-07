@@ -14,7 +14,8 @@ import { CapturePanel, type Capture } from "@/components/CapturePanel";
 import { EventEditor } from "@/components/EventEditor";
 import { MeasureSheet } from "@/components/MeasureSheet";
 import { OtherSheet, type OtherChoice } from "@/components/OtherSheet";
-import { CloseIcon, GearIcon } from "@/components/icons";
+import { DownloadIcon, GearIcon } from "@/components/icons";
+import { InstallSheet } from "@/components/InstallSheet";
 import { useInstall } from "@/store/install";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { StatTile } from "@/components/StatTile";
@@ -41,7 +42,7 @@ export function Home() {
   const [measuringId, setMeasuringId] = useState<string | null>(null);
   const lastTap = useRef(0);
   const install = useInstall();
-  const showInstallHint = install.kind !== "installed" && !prefs.installHintDismissed;
+  const [installing, setInstalling] = useState(false);
   const warned = useRef(false);
 
   if (!storageOk && !warned.current) {
@@ -126,27 +127,27 @@ export function Home() {
             {age ? ` · ${age}` : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setSettings(true)}
-          aria-label="Settings"
-          className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-        >
-          <GearIcon className="size-5" />
-        </button>
-      </header>
-
-      {showInstallHint ? (
-        <div className="mb-6 flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-2 pl-3 pr-1">
-          <button type="button" onClick={() => setSettings(true)} className="min-w-0 flex-1 text-left text-sm text-foreground">
-            <span className="font-bold">Add TinyLog to your home screen</span>
-            <span className="block text-xs text-muted-foreground">full screen, works offline · tap to see how</span>
-          </button>
-          <button type="button" aria-label="Dismiss" onClick={() => actions.setPrefs({ installHintDismissed: true })} className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground active:bg-secondary">
-            <CloseIcon className="size-4" />
+        <div className="flex gap-2">
+          {install.kind !== "installed" ? (
+            <button
+              type="button"
+              onClick={() => setInstalling(true)}
+              aria-label="Install the app"
+              className="flex size-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-primary active:scale-95"
+            >
+              <DownloadIcon className="size-5" />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setSettings(true)}
+            aria-label="Settings"
+            className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
+          >
+            <GearIcon className="size-5" />
           </button>
         </div>
-      ) : null}
+      </header>
 
       <div className="mb-6">
         <StateCard
@@ -228,6 +229,7 @@ export function Home() {
 
       {editingId ? <EventEditor eventId={editingId} now={now} onClose={() => setEditingId(null)} /> : null}
       {settings ? <SettingsSheet onClose={() => setSettings(false)} /> : null}
+      {installing ? <InstallSheet onClose={() => setInstalling(false)} /> : null}
       {other ? <OtherSheet onPick={pickOther} onClose={() => setOther(false)} /> : null}
       {measuring ? (
         <MeasureSheet

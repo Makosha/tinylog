@@ -24,7 +24,6 @@ export interface Prefs {
   /** "still asleep?" prompt snoozed until this time */
   staleSnoozedUntil?: number;
   units?: Units;
-  installHintDismissed?: boolean;
 }
 
 interface Snapshot {

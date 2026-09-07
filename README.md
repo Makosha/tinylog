@@ -13,9 +13,9 @@ npm run build      # static site in dist/ with service worker + manifest
 npm run preview    # serve dist/ to test the installed PWA
 ```
 
-Open on a phone, then "Add to Home Screen" (Safari: Share menu; the app
-shows the steps in Settings, and a real Install button where the browser
-offers one).
+Open on a phone, then "Add to Home Screen". The download button in the
+header (hidden once installed) shows the steps for Safari, or a real
+Install button where the browser offers one.
 
 Deploy to GitHub Pages (https://makosha.github.io/tinylog/):
 
