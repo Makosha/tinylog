@@ -4,7 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 
+/** Sub-path to serve from, e.g. "/my-bucket/" on Google Cloud Storage. */
+const base = process.env.BASE_PATH ?? "/";
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -17,7 +21,8 @@ export default defineConfig({
         description: "One-tap newborn feed and sleep log",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
+        start_url: base,
+        scope: base,
         background_color: "#221e19",
         theme_color: "#221e19",
         icons: [
