@@ -1,23 +1,21 @@
 /**
- * Feedback goes to a Google Form you own. Create a form with three
- * short-answer questions (Message, Contact, Context), open its prefilled
- * link, and copy the entry IDs here. Leave FORM_ID empty to hide the form.
+ * Feedback goes to a Google Form ("TinyLog Feedback"). The app posts to the
+ * form's response endpoint in the background; replies land in the linked
+ * Google Sheet. Leave FORM_ID empty to hide the box.
  */
 export const FEEDBACK = {
-  FORM_ID: "",
-  ENTRY_MESSAGE: "",
-  ENTRY_CONTACT: "",
-  ENTRY_CONTEXT: "",
+  FORM_ID: "1FAIpQLSciwi9dX9zHfrgXHa-69EuGZeEGGAqlus6GOG-8KtCNncaa9w",
+  ENTRY_MESSAGE: "entry.1851542963",
+  ENTRY_CONTACT: "entry.819592422",
 };
 
 export const feedbackConfigured = () => Boolean(FEEDBACK.FORM_ID && FEEDBACK.ENTRY_MESSAGE);
 
-/** Posts to the form's response endpoint. Resolves true unless the network call itself fails. */
+/** Posts to the form. The form has no context field, so context is appended to the message. */
 export async function sendFeedback(message: string, contact: string, context: string) {
   const body = new URLSearchParams();
-  body.set(FEEDBACK.ENTRY_MESSAGE, message);
-  if (FEEDBACK.ENTRY_CONTACT) body.set(FEEDBACK.ENTRY_CONTACT, contact);
-  if (FEEDBACK.ENTRY_CONTEXT) body.set(FEEDBACK.ENTRY_CONTEXT, context);
+  body.set(FEEDBACK.ENTRY_MESSAGE, context ? `${message}\n\n— ${context}` : message);
+  body.set(FEEDBACK.ENTRY_CONTACT, contact);
   try {
     await fetch(`https://docs.google.com/forms/d/e/${FEEDBACK.FORM_ID}/formResponse`, { method: "POST", mode: "no-cors", body });
     return true;
