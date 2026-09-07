@@ -15,6 +15,12 @@ npm run preview    # serve dist/ to test the installed PWA
 
 Open on a phone (or Chrome device mode), then "Add to Home Screen".
 
+Deploy to GitHub Pages (https://makosha.github.io/tinylog/):
+
+```sh
+npm run deploy
+```
+
 ## How it works
 
 The baby is always in one state, derived from the event log:
