@@ -1,49 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LABEL, eventLabel, type LogEvent } from "@/domain/events";
-import { deriveState, isStale, restEndedByFeed } from "@/domain/state";
+import { useMemo, useRef, useState } from "react";
+import { LABEL, eventLabel } from "@/domain/events";
+import { deriveState, isStale } from "@/domain/state";
 import { eventsInWindow, groupNights, windowStats } from "@/domain/stats";
+import { suggestNext } from "@/domain/suggest";
 import { ageLabel, durationLabel } from "@/domain/time";
 import { actions, useStore } from "@/store/store";
-import { applyTheme, onSystemThemeChange, resolveTheme } from "@/store/theme";
+import { resolveTheme } from "@/store/theme";
+import { showToast, undoToast } from "@/store/toast";
 import { ActionButtons, type Action } from "@/components/ActionButtons";
 import { CapturePanel, type Capture } from "@/components/CapturePanel";
-import { EditSheet } from "@/components/EditSheet";
+import { EventEditor } from "@/components/EventEditor";
 import { GearIcon, ICON } from "@/components/icons";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { StatTile } from "@/components/StatTile";
 import { StateCard } from "@/components/StateCard";
 import { Timeline } from "@/components/Timeline";
-import { Toast, type ToastData } from "@/components/Toast";
+import { useNow } from "@/components/useNow";
 
 const MIN = 60_000;
 const EDIT_LAST_FOR = 30 * MIN;
 const SNOOZE = 60 * MIN;
 const DEBOUNCE = 500;
 
-function useNow(intervalMs = 30_000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
-    const onVis = () => document.visibilityState === "visible" && setNow(Date.now());
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [intervalMs]);
-  return now;
-}
-
 const buzz = () => navigator.vibrate?.(20);
-
-function download(name: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 export function Home() {
   const { events, prefs, storageOk } = useStore();
@@ -52,31 +31,20 @@ export function Home() {
   const [stayedAsleep, setStayedAsleep] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
-  const [toast, setToast] = useState<ToastData | null>(null);
   const lastTap = useRef(0);
+  const warned = useRef(false);
 
-  useEffect(() => {
-    applyTheme(prefs.theme);
-    return onSystemThemeChange(() => applyTheme(prefs.theme));
-  }, [prefs.theme]);
-
-  useEffect(() => {
-    if (!storageOk) setToast({ message: "Can't save on this device" });
-  }, [storageOk]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const id = window.setTimeout(() => setToast(null), toast.action ? 8000 : 1800);
-    return () => window.clearTimeout(id);
-  }, [toast]);
+  if (!storageOk && !warned.current) {
+    warned.current = true;
+    setTimeout(() => showToast({ message: "Can't save on this device" }), 0);
+  }
 
   const state = useMemo(() => deriveState(events, now), [events, now]);
   const stats = useMemo(() => windowStats(events, now), [events, now]);
   const items = useMemo(() => groupNights(eventsInWindow(events, now)), [events, now]);
+  const suggestion = useMemo(() => suggestNext(events, state, now, prefs.babyDob), [events, state, now, prefs.babyDob]);
   const stale = isStale(events, now) && (prefs.staleSnoozedUntil ?? 0) < now;
   const lastEvent = !capture && events[0] && now - events[0].at < EDIT_LAST_FOR ? events[0] : undefined;
-
-  const undoToast = (label: string, undo: () => void) => setToast({ message: label, action: { label: "Undo", onClick: () => { undo(); setToast(null); } } });
 
   const act = (a: Action) => {
     const tappedAt = Date.now();
@@ -102,11 +70,9 @@ export function Home() {
   const undoCapture = (c: Capture) => {
     if (c.action === "wake") actions.reopenRest(c.eventId);
     else {
-      const removed = actions.delete(c.eventId);
+      actions.delete(c.eventId);
       if (c.closedRestId && !stayedAsleep) actions.reopenRest(c.closedRestId);
-      return removed;
     }
-    return undefined;
   };
 
   const closeCapture = () => {
@@ -118,13 +84,12 @@ export function Home() {
   };
 
   const captured = capture ? events.find((e) => e.id === capture.eventId) : undefined;
-  const editing = editingId ? events.find((e) => e.id === editingId) : undefined;
   const light = resolveTheme(prefs.theme) === "light";
   const age = prefs.babyDob ? ageLabel(prefs.babyDob, now) : "";
   const restTotal = stats.nightMins + stats.napMins;
 
   return (
-    <main className="safe-top mx-auto min-h-dvh w-full max-w-md px-4 pb-16">
+    <main className="safe-top mx-auto min-h-dvh w-full max-w-md px-4 pb-24">
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">{prefs.babyName || "TinyLog"}</h1>
@@ -192,12 +157,12 @@ export function Home() {
             onUndo={() => {
               undoCapture(capture);
               setCapture(null);
-              setToast({ message: "Undone" });
+              showToast({ message: "Undone" });
             }}
             onDone={closeCapture}
           />
         ) : (
-          <ActionButtons state={state} onAction={act} />
+          <ActionButtons state={state} suggestion={suggestion} onAction={act} />
         )}
       </div>
 
@@ -224,50 +189,14 @@ export function Home() {
       <Timeline
         items={items}
         now={now}
-        onSelect={(e: LogEvent) => {
+        onSelect={(e) => {
           if (capture) closeCapture();
           setEditingId(e.id);
         }}
       />
 
-      {editing ? (
-        <EditSheet
-          event={editing}
-          now={now}
-          canStayAsleep={editing.kind === "feed" && !!restEndedByFeed(events, editing.id)}
-          onPatch={(p) => actions.update(editing.id, p)}
-          onWakeNow={() => actions.wake()}
-          onStayAsleep={() => {
-            actions.mergeAroundFeed(editing.id);
-            setEditingId(null);
-            setToast({ message: "Sleep joined back together" });
-          }}
-          onDelete={() => {
-            const removed = actions.delete(editing.id);
-            setEditingId(null);
-            if (removed) undoToast(`${eventLabel(removed)} deleted`, () => actions.restore(removed));
-          }}
-          onClose={() => setEditingId(null)}
-        />
-      ) : null}
-
-      {settings ? (
-        <SettingsSheet
-          prefs={prefs}
-          onPrefs={(p) => actions.setPrefs(p)}
-          onExport={() => download(`tinylog-${new Date(now).toISOString().slice(0, 10)}.json`, actions.exportJson())}
-          onImport={(file) => {
-            if (!window.confirm("Replace everything on this phone with the imported log?")) return;
-            file.text().then((text) => {
-              const n = actions.importJson(text);
-              setToast({ message: n === null ? "That file isn't a TinyLog export" : `Imported ${n} entries` });
-            });
-          }}
-          onClose={() => setSettings(false)}
-        />
-      ) : null}
-
-      <Toast toast={toast} />
+      {editingId ? <EventEditor eventId={editingId} now={now} onClose={() => setEditingId(null)} /> : null}
+      {settings ? <SettingsSheet onClose={() => setSettings(false)} /> : null}
     </main>
   );
 }

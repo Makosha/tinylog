@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { windowStats, eventsInWindow, groupNights } from "./stats";
+import { windowStats, eventsInWindow, eventsInRange, rangeStats, daySeries, groupNights } from "./stats";
 import type { LogEvent } from "./events";
 
 const at = (d: number, h: number, mi = 0) => new Date(2026, 8, d, h, mi).getTime();
@@ -88,5 +88,27 @@ describe("groupNights", () => {
       { id: "s1", kind: "sleep", at: at(6, 20), endAt: at(7, 0, 50) },
     ]);
     expect(items.map((i) => i.type)).toEqual(["event", "night"]);
+  });
+});
+
+describe("calendar days", () => {
+  const dayStart = new Date(2026, 8, 7, 0, 0).getTime();
+  const next = new Date(2026, 8, 8, 0, 0).getTime();
+  it("eventsInRange keeps the overnight sleep and drops the 2 AM feed of the next day", () => {
+    const ids = eventsInRange(events, dayStart, next, next).map((e) => e.id);
+    expect(ids).toContain("s1");
+    expect(ids).toContain("f0");
+    expect(ids).not.toContain("fx");
+  });
+  it("rangeStats clips the overnight sleep to the day", () => {
+    const s = rangeStats(events, dayStart, next, next);
+    expect(s.nightMins).toBe(6 * 60);
+    expect(s.feeds).toBe(3);
+  });
+  it("daySeries returns one entry per day, oldest first", () => {
+    const series = daySeries(events, at(7, 12), 3, next);
+    expect(series.map((d) => new Date(d.day).getDate())).toEqual([5, 6, 7]);
+    expect(series[1]!.stats.nightMins).toBe(4 * 60); // 20:00–24:00 on the 6th
+    expect(series[2]!.stats.napMins).toBe(90);
   });
 });

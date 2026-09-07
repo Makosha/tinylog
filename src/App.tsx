@@ -1,5 +1,33 @@
+import { useEffect } from "react";
+import { TabBar } from "@/components/TabBar";
+import { Toast } from "@/components/Toast";
+import { Growth } from "@/screens/Growth";
+import { History } from "@/screens/History";
 import { Home } from "@/screens/Home";
+import { useRoute } from "@/store/route";
+import { useStore } from "@/store/store";
+import { applyTheme, onSystemThemeChange } from "@/store/theme";
+import { useToast } from "@/store/toast";
 
 export default function App() {
-  return <Home />;
+  const route = useRoute();
+  const { prefs } = useStore();
+  const toast = useToast();
+
+  useEffect(() => {
+    applyTheme(prefs.theme);
+    return onSystemThemeChange(() => applyTheme(prefs.theme));
+  }, [prefs.theme]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [route]);
+
+  return (
+    <>
+      {route === "today" ? <Home /> : route === "history" ? <History /> : <Growth />}
+      <TabBar route={route} />
+      <Toast toast={toast} />
+    </>
+  );
 }

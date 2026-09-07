@@ -1,10 +1,12 @@
 import { useSyncExternalStore } from "react";
-import { migrateV1, parseEvents, sortEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
+import { migrateV1, newId, parseEvents, sortEvents, type FeedSource, type LogEvent, type RestKind } from "@/domain/events";
 import * as S from "@/domain/state";
+import { parseMeasurements, sortMeasurements, type Measurement, type Sex } from "@/domain/growth";
 
 const KEY = "tinylog.events.v2";
 const V1_KEY = "tinylog.events.v1";
 const PREFS_KEY = "tinylog.prefs.v1";
+const GROWTH_KEY = "tinylog.growth.v1";
 
 export type Theme = "system" | "light" | "dark";
 
@@ -15,17 +17,19 @@ export interface Prefs {
   babyName?: string;
   /** epoch ms of the birth day */
   babyDob?: number;
+  babySex?: Sex;
   /** "still asleep?" prompt snoozed until this time */
   staleSnoozedUntil?: number;
 }
 
 interface Snapshot {
   events: LogEvent[];
+  measurements: Measurement[];
   prefs: Prefs;
   storageOk: boolean;
 }
 
-let snap: Snapshot = { events: [], prefs: { theme: "system", lastMl: {} }, storageOk: true };
+let snap: Snapshot = { events: [], measurements: [], prefs: { theme: "system", lastMl: {} }, storageOk: true };
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -35,6 +39,7 @@ function persist() {
   try {
     localStorage.setItem(KEY, JSON.stringify(snap.events));
     localStorage.setItem(PREFS_KEY, JSON.stringify(snap.prefs));
+    localStorage.setItem(GROWTH_KEY, JSON.stringify(snap.measurements));
     if (!snap.storageOk) snap = { ...snap, storageOk: true };
   } catch {
     snap = { ...snap, storageOk: false };
@@ -45,6 +50,7 @@ function hydrate() {
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   let events: LogEvent[] = [];
+  let measurements: Measurement[] = [];
   let prefs = snap.prefs;
   try {
     const raw = localStorage.getItem(KEY);
@@ -61,10 +67,12 @@ function hydrate() {
     }
     const p = localStorage.getItem(PREFS_KEY);
     if (p) prefs = { ...prefs, ...(JSON.parse(p) as Partial<Prefs>) };
+    const g = localStorage.getItem(GROWTH_KEY);
+    if (g) measurements = parseMeasurements(JSON.parse(g)) ?? [];
   } catch {
     /* storage unavailable: stay in memory */
   }
-  snap = { ...snap, events, prefs };
+  snap = { ...snap, events, measurements, prefs };
   persist();
   emit();
 }
@@ -86,6 +94,12 @@ export function useStore() {
 
 function setEvents(events: LogEvent[]) {
   snap = { ...snap, events };
+  persist();
+  emit();
+}
+
+function setMeasurements(measurements: Measurement[]) {
+  snap = { ...snap, measurements: sortMeasurements(measurements) };
   persist();
   emit();
 }
@@ -144,19 +158,54 @@ export const actions = {
     setEvents(S.restoreEvent(snap.events, event));
   },
   setPrefs,
+  addMeasurement(m: Omit<Measurement, "id">) {
+    const created: Measurement = { ...m, id: newId() };
+    setMeasurements([created, ...snap.measurements]);
+    return created;
+  },
+  updateMeasurement(id: string, patch: Partial<Omit<Measurement, "id">>) {
+    setMeasurements(
+      snap.measurements.map((m) => {
+        if (m.id !== id) return m;
+        const next = { ...m, ...patch };
+        for (const k of ["weightKg", "lengthCm", "headCm"] as const) if (next[k] === undefined || next[k]! <= 0) delete next[k];
+        return next;
+      }),
+    );
+  },
+  deleteMeasurement(id: string) {
+    const removed = snap.measurements.find((m) => m.id === id);
+    setMeasurements(snap.measurements.filter((m) => m.id !== id));
+    return removed;
+  },
+  restoreMeasurement(m: Measurement) {
+    if (!snap.measurements.some((x) => x.id === m.id)) setMeasurements([m, ...snap.measurements]);
+  },
   exportJson() {
-    return JSON.stringify({ app: "tinylog", version: 2, exportedAt: new Date().toISOString(), prefs: snap.prefs, events: snap.events }, null, 2);
+    return JSON.stringify(
+      { app: "tinylog", version: 3, exportedAt: new Date().toISOString(), prefs: snap.prefs, events: snap.events, measurements: snap.measurements },
+      null,
+      2,
+    );
   },
   /** Replaces all events. Returns the number imported, or null if the file is not a TinyLog export. */
   importJson(text: string): number | null {
     try {
-      const raw = JSON.parse(text) as { events?: unknown; prefs?: Partial<Prefs> };
+      const raw = JSON.parse(text) as { events?: unknown; measurements?: unknown; prefs?: Partial<Prefs> };
       const events = parseEvents(Array.isArray(raw) ? raw : raw.events);
       if (!events) return null;
       if (raw.prefs && typeof raw.prefs === "object") {
-        const { babyName, babyDob, lastMl, lastMinutes } = raw.prefs;
-        setPrefs({ ...(babyName ? { babyName } : {}), ...(babyDob ? { babyDob } : {}), ...(lastMl ? { lastMl } : {}), ...(lastMinutes ? { lastMinutes } : {}) });
+        const { babyName, babyDob, babySex, lastMl, lastMinutes } = raw.prefs;
+        setPrefs({
+          ...(babyName ? { babyName } : {}),
+          ...(babyDob ? { babyDob } : {}),
+          ...(babySex ? { babySex } : {}),
+          ...(lastMl ? { lastMl } : {}),
+          ...(lastMinutes ? { lastMinutes } : {}),
+        });
       }
+      const measurements = parseMeasurements(raw.measurements);
+      if (measurements) setMeasurements(measurements);
       setEvents(sortEvents(events));
       return events.length;
     } catch {

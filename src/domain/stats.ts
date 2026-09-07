@@ -2,11 +2,13 @@ import { isDiaper, isFeed, isRest, type FeedEvent, type LogEvent, type RestEvent
 
 export const WINDOW = 24 * 60 * 60_000;
 
-/** Events of the last 24 h: started in the window, or a rest that overlaps it. Newest first. */
-export function eventsInWindow(events: LogEvent[], now: number, windowMs = WINDOW) {
-  const from = now - windowMs;
-  return events.filter((e) => e.at >= from || (isRest(e) && (e.endAt ?? now) > from));
+/** Events that started in [from, to), or a rest that overlaps it. Newest first. */
+export function eventsInRange(events: LogEvent[], from: number, to: number, now: number) {
+  return events.filter((e) => (e.at >= from && e.at < to) || (isRest(e) && e.at < to && (e.endAt ?? now) > from));
 }
+
+/** Events of the last 24 h. Newest first. */
+export const eventsInWindow = (events: LogEvent[], now: number, windowMs = WINDOW) => eventsInRange(events, now - windowMs, now + 1, now);
 
 export interface WindowStats {
   feeds: number;
@@ -21,22 +23,21 @@ export interface WindowStats {
   lastFeed?: FeedEvent;
 }
 
-/** Rest minutes are clipped to the window; an open rest counts up to `now`. */
-export function windowStats(events: LogEvent[], now: number, windowMs = WINDOW): WindowStats {
-  const from = now - windowMs;
+/** Stats for [from, to). Rest minutes are clipped to the range; an open rest counts up to `now`. */
+export function rangeStats(events: LogEvent[], from: number, to: number, now: number): WindowStats {
   let nightMins = 0;
   let napMins = 0;
   for (const e of events) {
     if (!isRest(e)) continue;
     const s = Math.max(e.at, from);
-    const t = Math.min(e.endAt ?? now, now);
+    const t = Math.min(e.endAt ?? now, to, now);
     if (t > s) {
       if (e.kind === "sleep") nightMins += (t - s) / 60_000;
       else napMins += (t - s) / 60_000;
     }
   }
-  const feeds = events.filter((e): e is FeedEvent => isFeed(e) && e.at >= from && e.at <= now);
-  const diapers = events.filter((e) => isDiaper(e) && e.at >= from && e.at <= now);
+  const feeds = events.filter((e): e is FeedEvent => isFeed(e) && e.at >= from && e.at < to);
+  const diapers = events.filter((e) => isDiaper(e) && e.at >= from && e.at < to);
   const lastFeed = events.find(isFeed);
   return {
     feeds: feeds.length,
@@ -49,6 +50,29 @@ export function windowStats(events: LogEvent[], now: number, windowMs = WINDOW):
     dirty: diapers.filter((e) => isDiaper(e) && e.dirty).length,
     ...(lastFeed ? { lastFeed } : {}),
   };
+}
+
+/** Stats for the last 24 h. */
+export const windowStats = (events: LogEvent[], now: number, windowMs = WINDOW) => rangeStats(events, now - windowMs, now + 1, now);
+
+export interface DaySeries {
+  /** start of the calendar day */
+  day: number;
+  stats: WindowStats;
+}
+
+/** One entry per calendar day, oldest first, ending on the day containing `endMs`. */
+export function daySeries(events: LogEvent[], endMs: number, days: number, now: number): DaySeries[] {
+  const out: DaySeries[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(endMs);
+    d.setDate(d.getDate() - i);
+    const day = d.setHours(0, 0, 0, 0);
+    const next = new Date(day);
+    next.setDate(next.getDate() + 1);
+    out.push({ day, stats: rangeStats(events, day, next.getTime(), now) });
+  }
+  return out;
 }
 
 export type TimelineItem =

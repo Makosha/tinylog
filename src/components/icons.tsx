@@ -141,6 +141,23 @@ export const UploadIcon = (p: P) => (
   </svg>
 );
 
+export const ListIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M8 6.5h12M8 12h12M8 17.5h12" />
+    <circle cx="4.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    <circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none" />
+    <circle cx="4.5" cy="17.5" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const ChartIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 19.5h16" />
+    <path d="M4.5 15c3-1 5-6 8-6.5s4.5 3 7.5 1.5" />
+    <circle cx="12.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export const ICON = {
   bottle: BottleIcon,
   breast: BreastIcon,
