@@ -6,7 +6,6 @@ import { suggestNext } from "@/domain/suggest";
 import { ageLabel, durationLabel } from "@/domain/time";
 import { actions, useStore, useUnits } from "@/store/store";
 import { formatVolume } from "@/domain/units";
-import { resolveTheme } from "@/store/theme";
 import { showToast, undoToast } from "@/store/toast";
 import { navigate } from "@/store/route";
 import type { Measurement } from "@/domain/growth";
@@ -15,7 +14,8 @@ import { CapturePanel, type Capture } from "@/components/CapturePanel";
 import { EventEditor } from "@/components/EventEditor";
 import { MeasureSheet } from "@/components/MeasureSheet";
 import { OtherSheet, type OtherChoice } from "@/components/OtherSheet";
-import { GearIcon, ICON } from "@/components/icons";
+import { CloseIcon, GearIcon } from "@/components/icons";
+import { useInstall } from "@/store/install";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { StatTile } from "@/components/StatTile";
 import { StateCard } from "@/components/StateCard";
@@ -40,6 +40,8 @@ export function Home() {
   const [other, setOther] = useState(false);
   const [measuringId, setMeasuringId] = useState<string | null>(null);
   const lastTap = useRef(0);
+  const install = useInstall();
+  const showInstallHint = install.kind !== "installed" && !prefs.installHintDismissed;
   const warned = useRef(false);
 
   if (!storageOk && !warned.current) {
@@ -111,7 +113,6 @@ export function Home() {
 
   const captured = capture ? events.find((e) => e.id === capture.eventId) : undefined;
   const measuring = measuringId ? measurements.find((m) => m.id === measuringId) : undefined;
-  const light = resolveTheme(prefs.theme) === "light";
   const age = prefs.babyDob ? ageLabel(prefs.babyDob, now) : "";
   const restTotal = stats.nightMins + stats.napMins;
 
@@ -125,25 +126,27 @@ export function Home() {
             {age ? ` · ${age}` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => actions.setPrefs({ theme: light ? "dark" : "light" })}
-            aria-label={light ? "Switch to night mode" : "Switch to day mode"}
-            className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-          >
-            {light ? <ICON.sleep className="size-5" /> : <ICON.awake className="size-5" />}
+        <button
+          type="button"
+          onClick={() => setSettings(true)}
+          aria-label="Settings"
+          className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
+        >
+          <GearIcon className="size-5" />
+        </button>
+      </header>
+
+      {showInstallHint ? (
+        <div className="mb-6 flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-2 pl-3 pr-1">
+          <button type="button" onClick={() => setSettings(true)} className="min-w-0 flex-1 text-left text-sm text-foreground">
+            <span className="font-bold">Add TinyLog to your home screen</span>
+            <span className="block text-xs text-muted-foreground">full screen, works offline · tap to see how</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setSettings(true)}
-            aria-label="Settings"
-            className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-          >
-            <GearIcon className="size-5" />
+          <button type="button" aria-label="Dismiss" onClick={() => actions.setPrefs({ installHintDismissed: true })} className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground active:bg-secondary">
+            <CloseIcon className="size-4" />
           </button>
         </div>
-      </header>
+      ) : null}
 
       <div className="mb-6">
         <StateCard

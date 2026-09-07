@@ -6,6 +6,8 @@ import { Field } from "./Field";
 import { CloseIcon, DownloadIcon } from "./icons";
 import { Sheet } from "./Sheet";
 import { DateField } from "./DatePicker";
+import { InstallSection } from "./InstallSection";
+import type { Theme } from "@/store/store";
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -34,6 +36,30 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <CloseIcon className="size-5" />
         </button>
       </div>
+      <Field label="On this phone">
+        <InstallSection />
+      </Field>
+      <Field label="Theme">
+        <div className="flex rounded-2xl border border-border bg-secondary/60 p-1">
+          {(
+            [
+              ["system", "System"],
+              ["light", "Light"],
+              ["dark", "Dark"],
+            ] as [Theme, string][]
+          ).map(([v, text]) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={prefs.theme === v}
+              onClick={() => actions.setPrefs({ theme: v })}
+              className={`h-10 flex-1 rounded-xl text-sm font-bold ${prefs.theme === v ? "bg-primary text-primary-foreground" : "text-foreground"}`}
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+      </Field>
       <Field label="Baby's name">
         <input
           type="text"

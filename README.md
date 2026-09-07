@@ -13,7 +13,9 @@ npm run build      # static site in dist/ with service worker + manifest
 npm run preview    # serve dist/ to test the installed PWA
 ```
 
-Open on a phone (or Chrome device mode), then "Add to Home Screen".
+Open on a phone, then "Add to Home Screen" (Safari: Share menu; the app
+shows the steps in Settings, and a real Install button where the browser
+offers one).
 
 Deploy to GitHub Pages (https://makosha.github.io/tinylog/):
 
@@ -71,8 +73,7 @@ downloading the six xlsx files from who.int.
 
 Settings hold the baby's name, birth date, sex, and for a preterm baby the
 due date, which adds a corrected-age switch to the growth charts. Units (°C/°F, kg/lb·oz, cm/in, ml/fl oz) default from the phone's locale
-and can be switched; storage stays metric. A JSON backup can be exported. Theme follows the system by default; the sun/moon
-button overrides it.
+and can be switched; storage stays metric. A JSON backup can be exported. Theme (System / Light / Dark) is in settings.
 
 Code layout: `src/domain` is pure TypeScript (state machine, stats, growth
 maths, next-action heuristic, time helpers, unit-tested), `src/store` is the only module that touches

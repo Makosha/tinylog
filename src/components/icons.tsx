@@ -212,6 +212,13 @@ export const MoreIcon = (p: P) => (
   </svg>
 );
 
+export const ShareIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3.5v11M8 7l4-3.5L16 7" />
+    <path d="M6.5 11.5H5.5v9h13v-9h-1" />
+  </svg>
+);
+
 export const CopyIcon = (p: P) => (
   <svg {...base(p)}>
     <rect x="8.5" y="8.5" width="11" height="11" rx="2.5" />
