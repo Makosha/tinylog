@@ -1,13 +1,11 @@
-import { LABEL, type FeedSource, type RestKind } from "@/domain/events";
+import type { FeedSource, RestKind } from "@/domain/events";
 import type { BabyState } from "@/domain/state";
 import type { Suggestion } from "@/domain/suggest";
+import { useT } from "@/i18n/index";
+import { fill } from "@/i18n/index";
 import { ICON } from "./icons";
 
-export type Action =
-  | { type: "feed"; source: FeedSource }
-  | { type: "rest"; kind: RestKind }
-  | { type: "wake" }
-  | { type: "other" };
+export type Action = { type: "feed"; source: FeedSource } | { type: "rest"; kind: RestKind } | { type: "wake" } | { type: "other" };
 
 export const TONE = {
   nap: "text-nap border-nap/30 bg-nap/10",
@@ -19,7 +17,7 @@ export const TONE = {
 
 type Key = keyof typeof TONE;
 
-function Big({ k, onClick, tall, wide }: { k: Key; onClick: () => void; tall?: boolean; wide?: boolean }) {
+function Big({ k, label, onClick, tall, wide }: { k: Key; label: string; onClick: () => void; tall?: boolean; wide?: boolean }) {
   const Icon = ICON[k];
   return (
     <button
@@ -30,7 +28,7 @@ function Big({ k, onClick, tall, wide }: { k: Key; onClick: () => void; tall?: b
       <span className={`icon-tile ${wide ? "size-10" : "size-13"}`}>
         <Icon className={wide ? "size-6" : "size-8"} />
       </span>
-      <span className="text-base font-bold">{LABEL[k]}</span>
+      <span className="text-base font-bold">{label}</span>
     </button>
   );
 }
@@ -38,11 +36,7 @@ function Big({ k, onClick, tall, wide }: { k: Key; onClick: () => void; tall?: b
 function Hero({ k, label, reason, onClick }: { k: Key | "wake"; label: string; reason?: string; onClick: () => void }) {
   const Icon = ICON[k];
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="surface-warm col-span-2 flex h-24 items-center justify-center gap-3 rounded-3xl px-4 transition-transform active:scale-95"
-    >
+    <button type="button" onClick={onClick} className="surface-warm col-span-2 flex h-24 items-center justify-center gap-3 rounded-3xl px-4 transition-transform active:scale-95">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/20">
         <Icon className="size-7" />
       </span>
@@ -58,15 +52,17 @@ const suggestionKey = (s: Suggestion): Key => (s.type === "feed" ? s.source : s.
 const suggestionAction = (s: Suggestion): Action => (s.type === "feed" ? { type: "feed", source: s.source } : { type: "rest", kind: s.kind });
 
 export function ActionButtons({ state, suggestion, onAction }: { state: BabyState; suggestion: Suggestion | null; onAction: (a: Action) => void }) {
-  const other = <Big k="other" wide onClick={() => onAction({ type: "other" })} />;
+  const { t } = useT();
+  const other = <Big k="other" label={t.kind.other} wide onClick={() => onAction({ type: "other" })} />;
   const actionFor = (k: Key): Action => (k === "breast" || k === "bottle" ? { type: "feed", source: k } : k === "other" ? { type: "other" } : { type: "rest", kind: k });
+  const reason = (s: Suggestion) => (s.type === "feed" ? fill(t.time.lastFeedAgo, { t: s.reasonValue }) : fill(t.time.awakeFor, { t: s.reasonValue }));
 
   if (state.name !== "awake") {
     return (
       <section className="grid grid-cols-2 gap-3" aria-label="Log an event">
-        <Hero k="wake" label={LABEL.wake} onClick={() => onAction({ type: "wake" })} />
-        <Big k="breast" onClick={() => onAction({ type: "feed", source: "breast" })} />
-        <Big k="bottle" onClick={() => onAction({ type: "feed", source: "bottle" })} />
+        <Hero k="wake" label={t.kind.wake} onClick={() => onAction({ type: "wake" })} />
+        <Big k="breast" label={t.kind.breast} onClick={() => onAction({ type: "feed", source: "breast" })} />
+        <Big k="bottle" label={t.kind.bottle} onClick={() => onAction({ type: "feed", source: "bottle" })} />
         {other}
       </section>
     );
@@ -76,10 +72,10 @@ export function ActionButtons({ state, suggestion, onAction }: { state: BabyStat
     const rest: Key[] = (["nap", "sleep", "breast", "bottle"] as Key[]).filter((k) => k !== hk);
     return (
       <section className="grid grid-cols-2 gap-3" aria-label="Log an event">
-        <Hero k={hk} label={LABEL[hk]} reason={suggestion.reason} onClick={() => onAction(suggestionAction(suggestion))} />
+        <Hero k={hk} label={t.kind[hk]} reason={reason(suggestion)} onClick={() => onAction(suggestionAction(suggestion))} />
         <div className="col-span-2 grid grid-cols-3 gap-3">
           {rest.map((k) => (
-            <Big key={k} k={k} onClick={() => onAction(actionFor(k))} />
+            <Big key={k} k={k} label={t.kind[k]} onClick={() => onAction(actionFor(k))} />
           ))}
         </div>
         {other}
@@ -88,10 +84,10 @@ export function ActionButtons({ state, suggestion, onAction }: { state: BabyStat
   }
   return (
     <section className="grid grid-cols-2 gap-3" aria-label="Log an event">
-      <Big k="nap" tall onClick={() => onAction({ type: "rest", kind: "nap" })} />
-      <Big k="sleep" tall onClick={() => onAction({ type: "rest", kind: "sleep" })} />
-      <Big k="breast" onClick={() => onAction({ type: "feed", source: "breast" })} />
-      <Big k="bottle" onClick={() => onAction({ type: "feed", source: "bottle" })} />
+      <Big k="nap" label={t.kind.nap} tall onClick={() => onAction({ type: "rest", kind: "nap" })} />
+      <Big k="sleep" label={t.kind.sleep} tall onClick={() => onAction({ type: "rest", kind: "sleep" })} />
+      <Big k="breast" label={t.kind.breast} onClick={() => onAction({ type: "feed", source: "breast" })} />
+      <Big k="bottle" label={t.kind.bottle} onClick={() => onAction({ type: "feed", source: "bottle" })} />
       {other}
     </section>
   );

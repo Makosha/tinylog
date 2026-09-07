@@ -1,9 +1,11 @@
+import { useT } from "@/i18n/index";
 import { Chip } from "./Chip";
 import { Stepper } from "./Stepper";
 
 export const MIN_PRESETS = [5, 10, 15, 20, 30];
 
 export function MinutesChips({ value, onChange }: { value: number | undefined; onChange: (m: number | undefined) => void }) {
+  const { t } = useT();
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-5 gap-2">
@@ -16,8 +18,8 @@ export function MinutesChips({ value, onChange }: { value: number | undefined; o
       <Stepper
         value={value !== undefined ? `${value}` : "–"}
         unit="min"
-        minusLabel="5 minutes less"
-        plusLabel="5 minutes more"
+        minusLabel={t.steps.less}
+        plusLabel={t.steps.more}
         onStep={(d) => {
           if (value === undefined) {
             if (d > 0) onChange(10);

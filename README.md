@@ -23,6 +23,16 @@ Deploy to GitHub Pages (https://makosha.github.io/tinylog/):
 npm run deploy
 ```
 
+## Languages, welcome, about
+
+Six languages (English, Russian, Kazakh, Spanish, French, German) in
+`src/i18n/`, one file per language with the same typed keys; a test
+checks every key and placeholder exists in every language. A welcome
+screen runs once, preselecting the language from the phone and offering
+name, birth date and sex. The About tab carries the story, privacy, WHO
+attribution, version, and a feedback box that posts to a Google Form
+(fill the IDs in `src/feedback.ts`; the box hides until then).
+
 ## How it works
 
 The baby is always in one state, derived from the event log:

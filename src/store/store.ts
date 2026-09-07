@@ -24,6 +24,8 @@ export interface Prefs {
   /** "still asleep?" prompt snoozed until this time */
   staleSnoozedUntil?: number;
   units?: Units;
+  lang?: "en" | "ru" | "kk" | "es" | "fr" | "de";
+  welcomeDone?: boolean;
 }
 
 interface Snapshot {
@@ -31,9 +33,10 @@ interface Snapshot {
   measurements: Measurement[];
   prefs: Prefs;
   storageOk: boolean;
+  hydrated: boolean;
 }
 
-let snap: Snapshot = { events: [], measurements: [], prefs: { theme: "system", lastMl: {} }, storageOk: true };
+let snap: Snapshot = { events: [], measurements: [], prefs: { theme: "system", lastMl: {} }, storageOk: true, hydrated: false };
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -77,7 +80,7 @@ function hydrate() {
   } catch {
     /* storage unavailable: stay in memory */
   }
-  snap = { ...snap, events, measurements, prefs };
+  snap = { ...snap, events, measurements, prefs, hydrated: true };
   persist();
   emit();
 }

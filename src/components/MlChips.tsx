@@ -1,11 +1,13 @@
 import { volumeScale } from "@/domain/units";
 import { useUnits } from "@/store/store";
+import { useT } from "@/i18n/index";
 import { Chip } from "./Chip";
 import { Stepper } from "./Stepper";
 
 /** Bottle amount. Stored in ml, shown in the preferred unit. */
 export function MlChips({ value, onChange }: { value: number | undefined; onChange: (ml: number | undefined) => void }) {
   const v = volumeScale(useUnits());
+  const { t } = useT();
   const same = (a: number, b: number) => Math.abs(a - b) < 0.5;
   return (
     <div className="flex flex-col gap-2">
@@ -19,8 +21,8 @@ export function MlChips({ value, onChange }: { value: number | undefined; onChan
       <Stepper
         value={value !== undefined ? v.to(value).toFixed(v.decimals) : "–"}
         unit={v.unit}
-        minusLabel="a bit less"
-        plusLabel="a bit more"
+        minusLabel={t.steps.less}
+        plusLabel={t.steps.more}
         onStep={(d) => {
           if (value === undefined) {
             if (d > 0) onChange(Math.round(v.start));

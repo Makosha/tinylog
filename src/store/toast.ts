@@ -13,11 +13,11 @@ export function showToast(t: ToastData | null) {
   if (t) timer = window.setTimeout(() => showToast(null), t.action ? 8000 : 1800);
 }
 
-export const undoToast = (message: string, undo: () => void) =>
+export const undoToast = (message: string, undo: () => void, label = "Undo") =>
   showToast({
     message,
     action: {
-      label: "Undo",
+      label,
       onClick: () => {
         undo();
         showToast(null);

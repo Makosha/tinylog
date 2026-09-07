@@ -1,11 +1,12 @@
 import { useSyncExternalStore } from "react";
 
-export type Route = "today" | "history" | "growth";
+export type Route = "today" | "history" | "growth" | "about";
 
 const parse = (): Route => {
   const h = typeof window === "undefined" ? "" : window.location.hash;
   if (h.startsWith("#/history")) return "history";
   if (h.startsWith("#/growth")) return "growth";
+  if (h.startsWith("#/about")) return "about";
   return "today";
 };
 

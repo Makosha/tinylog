@@ -1,22 +1,23 @@
 import { useMemo, useRef, useState } from "react";
-import { LABEL, eventLabel } from "@/domain/events";
+import type { Measurement } from "@/domain/growth";
 import { deriveState, isStale } from "@/domain/state";
 import { eventsInWindow, groupNights, windowStats } from "@/domain/stats";
 import { suggestNext } from "@/domain/suggest";
-import { ageLabel, durationLabel } from "@/domain/time";
-import { actions, useStore, useUnits } from "@/store/store";
+import { durationLabel } from "@/domain/time";
 import { formatVolume } from "@/domain/units";
-import { showToast, undoToast } from "@/store/toast";
+import { fill, useT } from "@/i18n/index";
+import { ageLabel, labelOf } from "@/i18n/labels";
 import { navigate } from "@/store/route";
-import type { Measurement } from "@/domain/growth";
+import { actions, useStore, useUnits } from "@/store/store";
+import { useInstall } from "@/store/install";
+import { showToast, undoToast } from "@/store/toast";
 import { ActionButtons, type Action } from "@/components/ActionButtons";
 import { CapturePanel, type Capture } from "@/components/CapturePanel";
 import { EventEditor } from "@/components/EventEditor";
-import { MeasureSheet } from "@/components/MeasureSheet";
-import { OtherSheet, type OtherChoice } from "@/components/OtherSheet";
 import { DownloadIcon, GearIcon } from "@/components/icons";
 import { InstallSheet } from "@/components/InstallSheet";
-import { useInstall } from "@/store/install";
+import { MeasureSheet } from "@/components/MeasureSheet";
+import { OtherSheet, type OtherChoice } from "@/components/OtherSheet";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { StatTile } from "@/components/StatTile";
 import { StateCard } from "@/components/StateCard";
@@ -33,6 +34,7 @@ const buzz = () => navigator.vibrate?.(20);
 export function Home() {
   const { events, measurements, prefs, storageOk } = useStore();
   const units = useUnits();
+  const { t, locale } = useT();
   const now = useNow();
   const [capture, setCapture] = useState<Capture | null>(null);
   const [stayedAsleep, setStayedAsleep] = useState(false);
@@ -41,9 +43,9 @@ export function Home() {
   const [other, setOther] = useState(false);
   const [measuringId, setMeasuringId] = useState<string | null>(null);
   const lastTap = useRef(0);
+  const warned = useRef(false);
   const install = useInstall();
   const [installing, setInstalling] = useState(false);
-  const warned = useRef(false);
 
   if (!storageOk && !warned.current) {
     warned.current = true;
@@ -109,41 +111,31 @@ export function Home() {
     const c = capture;
     const e = events.find((x) => x.id === c.eventId);
     setCapture(null);
-    if (e) undoToast(`${c.action === "wake" ? "Wake up" : eventLabel(e)} saved`, () => undoCapture(c));
+    if (e) undoToast(fill(t.capture.saved, { k: c.action === "wake" ? t.kind.wake : labelOf(t, e) }), () => undoCapture(c), t.capture.undo);
   };
 
   const captured = capture ? events.find((e) => e.id === capture.eventId) : undefined;
   const measuring = measuringId ? measurements.find((m) => m.id === measuringId) : undefined;
-  const age = prefs.babyDob ? ageLabel(prefs.babyDob, now) : "";
+  const age = prefs.babyDob ? ageLabel(t, prefs.babyDob, now) : "";
   const restTotal = stats.nightMins + stats.napMins;
 
   return (
     <main className="safe-top mx-auto min-h-dvh w-full max-w-md px-4 pb-24">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">{prefs.babyName || "TinyLog"}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">{prefs.babyName || t.app.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {new Date(now).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
+            {new Date(now).toLocaleDateString(locale, { weekday: "long", month: "short", day: "numeric" })}
             {age ? ` · ${age}` : ""}
           </p>
         </div>
         <div className="flex gap-2">
           {install.kind !== "installed" ? (
-            <button
-              type="button"
-              onClick={() => setInstalling(true)}
-              aria-label="Install the app"
-              className="flex size-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-primary active:scale-95"
-            >
+            <button type="button" onClick={() => setInstalling(true)} aria-label={t.home.installAria} className="flex size-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-primary active:scale-95">
               <DownloadIcon className="size-5" />
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => setSettings(true)}
-            aria-label="Settings"
-            className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95"
-          >
+          <button type="button" onClick={() => setSettings(true)} aria-label={t.home.settingsAria} className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground active:scale-95">
             <GearIcon className="size-5" />
           </button>
         </div>
@@ -189,7 +181,7 @@ export function Home() {
             onUndo={() => {
               undoCapture(capture);
               setCapture(null);
-              showToast({ message: "Undone" });
+              showToast({ message: t.capture.undone });
             }}
             onDone={closeCapture}
           />
@@ -198,26 +190,26 @@ export function Home() {
         )}
       </div>
 
-      <section className="mb-6 grid grid-cols-2 gap-3" aria-label="Last 24 hours">
+      <section className="mb-6 grid grid-cols-2 gap-3" aria-label={t.home.last24h}>
         <StatTile
-          label="Feeds · 24h"
+          label={t.home.feeds24h}
           value={`${stats.feeds}`}
-          sub={[stats.ml ? formatVolume(stats.ml, units) : null, stats.breastMins ? `${stats.breastMins}m breast` : null].filter(Boolean).join(" · ") || "none yet"}
+          sub={[stats.ml ? formatVolume(stats.ml, units) : null, stats.breastMins ? fill(t.home.breastMins, { n: stats.breastMins }) : null].filter(Boolean).join(" · ") || t.home.noneYet}
         />
         <StatTile
-          label="Sleep · 24h"
+          label={t.home.sleep24h}
           value={durationLabel(0, restTotal * MIN)}
-          sub={`night ${durationLabel(0, stats.nightMins * MIN)} · naps ${durationLabel(0, stats.napMins * MIN)}`}
+          sub={`${fill(t.home.night, { t: durationLabel(0, stats.nightMins * MIN) })} · ${fill(t.home.naps, { t: durationLabel(0, stats.napMins * MIN) })}`}
         />
         <StatTile
-          label="Last feed"
+          label={t.home.lastFeed}
           value={stats.lastFeed ? durationLabel(stats.lastFeed.at, now) : "—"}
-          sub={stats.lastFeed ? `ago · ${LABEL[stats.lastFeed.source].toLowerCase()}${stats.lastFeed.side ? ` ${stats.lastFeed.side}` : ""}` : "no feeds"}
+          sub={stats.lastFeed ? `${t.kind[stats.lastFeed.source].toLowerCase()}${stats.lastFeed.side ? ` · ${t.detail[stats.lastFeed.side]}` : ""}` : t.home.noFeeds}
         />
-        <StatTile label="Diapers · 24h" value={`${stats.diapers}`} sub={stats.diapers ? `${stats.wet} wet · ${stats.dirty} dirty` : "none yet"} />
+        <StatTile label={t.home.diapers24h} value={`${stats.diapers}`} sub={stats.diapers ? fill(t.home.wetDirty, { w: stats.wet, d: stats.dirty }) : t.home.noneYet} />
       </section>
 
-      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Last 24 hours</h2>
+      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{t.home.last24h}</h2>
       <Timeline
         items={items}
         now={now}
@@ -239,11 +231,11 @@ export function Home() {
           onDelete={() => {
             const removed = actions.deleteMeasurement(measuring.id);
             setMeasuringId(null);
-            if (removed) undoToast("Measurement deleted", () => actions.restoreMeasurement(removed as Measurement));
+            if (removed) undoToast(t.growth.measurementDeleted, () => actions.restoreMeasurement(removed as Measurement), t.capture.undo);
           }}
           onClose={() => {
             setMeasuringId(null);
-            showToast({ message: "Measurement saved", action: { label: "Growth", onClick: () => navigate("growth") } });
+            showToast({ message: t.growth.measurementSaved, action: { label: t.tabs.growth, onClick: () => navigate("growth") } });
           }}
         />
       ) : null}

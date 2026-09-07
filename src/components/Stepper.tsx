@@ -46,7 +46,6 @@ export function HoldButton({
   children: React.ReactNode;
 }) {
   const timer = useRef<number>(0);
-  const fired = useRef(false);
   const fireRef = useRef(onFire);
   fireRef.current = onFire;
 
@@ -57,7 +56,6 @@ export function HoldButton({
   };
   const start = () => {
     if (disabled) return;
-    fired.current = true;
     fireRef.current();
     timer.current = window.setTimeout(() => {
       timer.current = window.setInterval(() => fireRef.current(), 140);

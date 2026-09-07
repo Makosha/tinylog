@@ -226,6 +226,12 @@ export const CopyIcon = (p: P) => (
   </svg>
 );
 
+export const HeartIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 20s-7.5-4.6-7.5-10A4 4 0 0 1 12 7.6 4 4 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />
+  </svg>
+);
+
 export const ListIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M8 6.5h12M8 12h12M8 17.5h12" />

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { fill, pct, useT } from "@/i18n/index";
+import { fmtDate } from "@/i18n/labels";
 import {
   CHART_PERCENTILES,
   MEASURE_META,
@@ -37,6 +39,7 @@ export function GrowthChart({
   scale: { unit: string; to: (v: number) => number; decimals: number };
 }) {
   const meta = MEASURE_META[measure];
+  const { t, lang, locale } = useT();
   const [active, setActive] = useState<string | null>(null);
 
   const points = useMemo(
@@ -65,15 +68,15 @@ export function GrowthChart({
 
   // x ticks: weeks under 3 months, months after
   const ticks: { d: number; label: string }[] = [];
-  if (xDays <= 13 * 7) for (let w = 0; w * 7 <= xDays; w += 2) ticks.push({ d: w * 7, label: w ? `${w}w` : "birth" });
-  else for (let m = 0; m * MONTH <= xDays; m += xDays > 12 * MONTH ? 3 : 1) ticks.push({ d: m * MONTH, label: m ? `${m}m` : "birth" });
+  if (xDays <= 13 * 7) for (let w = 0; w * 7 <= xDays; w += 2) ticks.push({ d: w * 7, label: w ? fill(t.growth.weekShort, { n: w }) : t.growth.birth });
+  else for (let m = 0; m * MONTH <= xDays; m += xDays > 12 * MONTH ? 3 : 1) ticks.push({ d: m * MONTH, label: m ? fill(t.growth.monthShort, { n: m }) : t.growth.birth });
   const yTicks = niceTicks(yMin, yMax, 5);
   const band = `${path(hi)} ${[...lo].reverse().map((p) => `L${x(p.days).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ")} Z`;
   const activePt = points.find((p) => p.id === active);
 
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label={`${meta.label} against WHO percentiles`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label={fill(t.growth.chartAria, { m: t.growth[measure] })}>
         {yTicks.map((t) => (
           <g key={t}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-border" strokeWidth="1" />
@@ -114,21 +117,13 @@ export function GrowthChart({
           </span>
           <span className="text-muted-foreground">
             {" "}
-            · {new Date(activePt.at).toLocaleDateString([], { month: "short", day: "numeric" })}
-            {activePt.a ? ` · ${ordinal(activePt.a.percentile)} percentile` : ""}
+            · {fmtDate(locale, activePt.at, { month: "short", day: "numeric" })}
+            {activePt.a ? ` · ${fill(t.growth.percentile, { p: pct(lang, activePt.a.percentile) })}` : ""}
           </span>
         </div>
       ) : null}
     </div>
   );
-}
-
-export function ordinal(n: number) {
-  if (n < 1) return "<1st";
-  if (n > 99) return ">99th";
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
 }
 
 function niceTicks(min: number, max: number, count: number) {

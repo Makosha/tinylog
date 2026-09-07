@@ -6,8 +6,8 @@ const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
 export type Suggestion =
-  | { type: "feed"; source: FeedSource; reason: string; score: number }
-  | { type: "rest"; kind: RestKind; reason: string; score: number };
+  | { type: "feed"; source: FeedSource; reason: string; reasonValue: string; score: number }
+  | { type: "rest"; kind: RestKind; reason: string; reasonValue: string; score: number };
 
 /** How long a baby of this age usually stays awake between sleeps. */
 export function wakeWindowMs(ageDays: number | undefined) {
@@ -52,9 +52,11 @@ export function suggestNext(events: LogEvent[], state: BabyState, now: number, d
   const threshold = 0.85;
   if (feedScore < threshold && restScore < threshold) return null;
   if (feedScore >= restScore) {
-    return { type: "feed", source: lastFeed?.source ?? "breast", reason: `last feed ${ago(now - lastFeed!.at)} ago`, score: feedScore };
+    const v = ago(now - lastFeed!.at);
+    return { type: "feed", source: lastFeed?.source ?? "breast", reason: `last feed ${v} ago`, reasonValue: v, score: feedScore };
   }
-  return { type: "rest", kind: isNight(now) ? "sleep" : "nap", reason: `awake for ${ago(awakeFor)}`, score: restScore };
+  const v = ago(awakeFor);
+  return { type: "rest", kind: isNight(now) ? "sleep" : "nap", reason: `awake for ${v}`, reasonValue: v, score: restScore };
 }
 
 function ago(ms: number) {
