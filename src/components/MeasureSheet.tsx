@@ -79,7 +79,13 @@ export function MeasureSheet({
                   unit={meta.unit}
                   minusLabel={`${meta.label} less`}
                   plusLabel={`${meta.label} more`}
-                  onStep={(d) => onPatch({ [meta.key]: round(Math.max(0, (v ?? defaultFor(k)) + d * meta.step), meta.decimals) || undefined })}
+                  onStep={(d) => {
+                    if (v === undefined) {
+                      if (d > 0) onPatch({ [meta.key]: defaultFor(k) });
+                      return;
+                    }
+                    onPatch({ [meta.key]: round(Math.max(0, v + d * meta.step), meta.decimals) || undefined });
+                  }}
                 />
               </div>
               <button

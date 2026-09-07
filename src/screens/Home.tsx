@@ -168,6 +168,7 @@ export function Home() {
           <CapturePanel
             capture={capture}
             event={captured}
+            autoClose={capture.action !== "other"}
             stayedAsleep={stayedAsleep}
             onStayedAsleep={(v) => {
               setStayedAsleep(v);

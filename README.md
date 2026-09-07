@@ -32,8 +32,10 @@ replaces the buttons for 10 seconds with only the fields that matter:
 time (−1h / −5 / +5 / +1h, hold to repeat, snapped to 5-minute marks), side
 and minutes for breast, ml for bottle (prefilled with the last amount), wet
 or dirty for diapers, and the dream-feed switch when the feed interrupted a
-sleep. Touching the panel pauses the countdown, so does the screen going
-dark; Done closes it; Undo removes the event. Every save and delete shows a
+sleep. For feeds, sleep and wake-ups the panel closes by itself after 10 s
+without a touch (any touch restarts the 10 s; the screen going dark pauses
+it), with a close control in the header. "Other" events stay open until
+Done. Undo removes the event. Every save and delete shows a
 toast with Undo. Tap any row to edit or delete it (delete asks twice). Edit
 sheets and settings save every change immediately; there is no Save button.
 

@@ -3,7 +3,7 @@ import { LABEL, isRest, type LogEvent } from "@/domain/events";
 import { OtherFields } from "./OtherFields";
 import { eventTone } from "./kind";
 import type { EventPatch } from "@/domain/state";
-import { CheckIcon, ICON, UndoIcon } from "./icons";
+import { CheckIcon, CloseIcon, ICON, UndoIcon } from "./icons";
 import { Field } from "./Field";
 import { MinutesChips } from "./MinutesChips";
 import { MlChips } from "./MlChips";
@@ -27,13 +27,14 @@ const TICK = 100;
 const GUARD = 350;
 
 /**
- * Replaces the action buttons right after a tap. Shows the fields that
- * matter for that event with a 10 s countdown; any touch pauses it, so does
- * the screen going dark.
+ * Replaces the action buttons right after a tap and shows the fields that
+ * matter for that event. Feeds, sleep and wake-ups close by themselves after
+ * 10 s of no touching; "other" events stay open until Done.
  */
 export function CapturePanel({
   capture,
   event,
+  autoClose,
   stayedAsleep,
   onStayedAsleep,
   onPatch,
@@ -42,6 +43,8 @@ export function CapturePanel({
 }: {
   capture: Capture;
   event: LogEvent | undefined;
+  /** close by itself after 10 s without a touch */
+  autoClose: boolean;
   stayedAsleep?: boolean;
   onStayedAsleep?: (v: boolean) => void;
   onPatch: (p: EventPatch) => void;
@@ -49,31 +52,29 @@ export function CapturePanel({
   onDone: () => void;
 }) {
   const [left, setLeft] = useState(COUNTDOWN);
-  const [paused, setPaused] = useState(false);
   const [guarded, setGuarded] = useState(true);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
   useEffect(() => {
     setLeft(COUNTDOWN);
-    setPaused(false);
     setGuarded(true);
     const id = window.setTimeout(() => setGuarded(false), GUARD);
     return () => window.clearTimeout(id);
   }, [capture]);
 
   useEffect(() => {
-    if (paused) return;
+    if (!autoClose) return;
     const id = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       setLeft((l) => Math.max(0, l - TICK));
     }, TICK);
     return () => window.clearInterval(id);
-  }, [paused, capture]);
+  }, [autoClose, capture]);
 
   useEffect(() => {
-    if (left === 0 && !paused) doneRef.current();
-  }, [left, paused]);
+    if (autoClose && left === 0) doneRef.current();
+  }, [left, autoClose]);
 
   if (!event) return null;
 
@@ -93,8 +94,9 @@ export function CapturePanel({
           e.stopPropagation();
           return;
         }
-        setPaused(true);
+        setLeft(COUNTDOWN);
       }}
+      onPointerUpCapture={() => setLeft(COUNTDOWN)}
       className={`card-soft animate-pop-in relative overflow-hidden border-primary/40 p-4 shadow-lg ${guarded ? "pointer-events-none" : ""}`}
     >
       <div className="mb-4 flex items-center gap-3">
@@ -103,7 +105,7 @@ export function CapturePanel({
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-xl font-bold leading-tight text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground">{paused ? "saved · tap Done when finished" : "saved · closing soon"}</p>
+          <p className="text-xs text-muted-foreground">{autoClose ? "saved · closes by itself" : "saved · tap Done when finished"}</p>
         </div>
         <button
           type="button"
@@ -112,6 +114,11 @@ export function CapturePanel({
         >
           <UndoIcon className="size-4" /> Undo
         </button>
+        {autoClose ? (
+          <button type="button" aria-label="Close" onClick={onDone} className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground active:bg-secondary">
+            <CloseIcon className="size-5" />
+          </button>
+        ) : null}
       </div>
 
       <Field label={isWake ? "Ended" : "Started"}>
@@ -153,15 +160,17 @@ export function CapturePanel({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={onDone}
-        className="surface-warm flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold active:scale-[0.98]"
-      >
-        <CheckIcon className="size-5" /> Done
-      </button>
+      {autoClose ? null : (
+        <button
+          type="button"
+          onClick={onDone}
+          className="surface-warm flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold active:scale-[0.98]"
+        >
+          <CheckIcon className="size-5" /> Done
+        </button>
+      )}
 
-      {!paused ? (
+      {autoClose ? (
         <span
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-1 origin-left bg-primary"

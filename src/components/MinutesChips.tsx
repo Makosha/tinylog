@@ -18,7 +18,13 @@ export function MinutesChips({ value, onChange }: { value: number | undefined; o
         unit="min"
         minusLabel="5 minutes less"
         plusLabel="5 minutes more"
-        onStep={(d) => onChange(Math.max(0, (value ?? 10) + d * 5) || undefined)}
+        onStep={(d) => {
+          if (value === undefined) {
+            if (d > 0) onChange(10);
+            return;
+          }
+          onChange(Math.max(0, value + d * 5) || undefined);
+        }}
       />
     </div>
   );

@@ -18,7 +18,13 @@ export function MlChips({ value, onChange }: { value: number | undefined; onChan
         unit="ml"
         minusLabel="10 ml less"
         plusLabel="10 ml more"
-        onStep={(d) => onChange(Math.max(0, (value ?? 90) + d * 10) || undefined)}
+        onStep={(d) => {
+          if (value === undefined) {
+            if (d > 0) onChange(90);
+            return;
+          }
+          onChange(Math.max(0, value + d * 10) || undefined);
+        }}
       />
     </div>
   );
